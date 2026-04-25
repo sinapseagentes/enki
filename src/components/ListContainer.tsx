@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { CardItem } from "./CardItem";
 import type { List, Card } from "../types";
+import { deleteList } from "../services/listService";
 
 interface ListContainerProps {
   list: List;
@@ -22,6 +23,16 @@ export const ListContainer = ({ list, cards, index, onAddCard }: ListContainerPr
     setIsAddingCard(false);
   };
 
+  const handleDeleteList = async () => {
+    if (confirm("Tem certeza que deseja excluir esta lista e TODOS os cartões nela?")) {
+      try {
+        await deleteList(list.id!);
+      } catch (error) {
+        console.error("Erro ao excluir lista:", error);
+      }
+    }
+  };
+
   return (
     <Draggable draggableId={list.id!} index={index}>
       {(provided, snapshot) => (
@@ -35,9 +46,16 @@ export const ListContainer = ({ list, cards, index, onAddCard }: ListContainerPr
           {/* List Header (Drag Handle) */}
           <div
             {...provided.dragHandleProps}
-            className="p-3 font-semibold text-gray-800 flex justify-between items-center cursor-grab active:cursor-grabbing"
+            className="p-3 font-semibold text-gray-800 flex justify-between items-center cursor-grab active:cursor-grabbing group"
           >
             <h2 className="text-sm">{list.title}</h2>
+            <button
+              onClick={handleDeleteList}
+              className="p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-600 hover:bg-gray-200 rounded transition-all"
+              title="Excluir lista"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
           </div>
 
           {/* Cards Droppable Area */}

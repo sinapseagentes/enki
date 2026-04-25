@@ -33,6 +33,8 @@ export const subscribeToLists = (
       lists.push({ id: doc.id, ...doc.data() } as List);
     });
     callback(lists);
+  }, (error) => {
+    console.error("Error listening to lists:", error);
   });
 };
 

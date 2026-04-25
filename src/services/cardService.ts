@@ -34,6 +34,8 @@ export const subscribeToCards = (
       cards.push({ id: doc.id, ...doc.data() } as Card);
     });
     callback(cards);
+  }, (error) => {
+    console.error("Error listening to cards:", error);
   });
 };
 

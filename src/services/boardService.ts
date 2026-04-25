@@ -34,5 +34,7 @@ export const subscribeToBoards = (
       boards.push({ id: doc.id, ...doc.data() } as Board);
     });
     callback(boards);
+  }, (error) => {
+    console.error("Error listening to boards:", error);
   });
 };
