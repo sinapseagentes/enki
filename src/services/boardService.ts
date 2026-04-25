@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import type { DocumentData, QuerySnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { Board } from "../types";
@@ -37,4 +37,9 @@ export const subscribeToBoards = (
   }, (error) => {
     console.error("Error listening to boards:", error);
   });
+};
+
+export const deleteBoard = async (boardId: string) => {
+  const boardRef = doc(db, BOARDS_COLLECTION, boardId);
+  await deleteDoc(boardRef);
 };
