@@ -6,6 +6,7 @@ import { uploadFile } from "../services/storageService";
 import { logActivity } from "../services/activityService";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext";
+import confetti from "canvas-confetti";
 
 interface CardModalProps {
   card: Card;
@@ -171,9 +172,21 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
   };
 
   const toggleChecklistItem = (id: string) => {
-    setChecklists(checklists.map(item => 
+    const updated = checklists.map(item => 
       item.id === id ? { ...item, completed: !item.completed } : item
-    ));
+    );
+    setChecklists(updated);
+
+    // Celebração ao completar 100%
+    if (updated.length > 0 && updated.every(i => i.completed)) {
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#4ade80", "#60a5fa", "#facc15"]
+      });
+      showNotification("Checklist finalizado! 🎉");
+    }
   };
 
   const removeChecklistItem = (id: string) => {
