@@ -45,6 +45,11 @@ export const deleteBoard = async (boardId: string) => {
   await deleteDoc(boardRef);
 };
 
+export const updateBoardTitle = async (boardId: string, title: string) => {
+  const boardRef = doc(db, BOARDS_COLLECTION, boardId);
+  await updateDoc(boardRef, { title, updatedAt: Date.now() });
+};
+
 export const inviteUserToBoard = async (boardId: string, email: string) => {
   // Find user by email
   const q = query(collection(db, USERS_COLLECTION), where("email", "==", email));

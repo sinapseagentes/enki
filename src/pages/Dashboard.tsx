@@ -1,13 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { createBoard, subscribeToBoards, deleteBoard } from "../services/boardService";
+import { createBoard, subscribeToBoards, deleteBoard, updateBoardTitle } from "../services/boardService";
 import { subscribeToLists } from "../services/listService";
 import type { Board, List } from "../types";
 
 const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.MouseEvent, id: string) => void }) => {
   const navigate = useNavigate();
   const [lists, setLists] = useState<List[]>([]);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(board.title);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!board.id) return;
@@ -17,13 +20,58 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
     return () => unsubscribe();
   }, [board.id]);
 
+  // Sync title draft when board prop changes (real-time)
+  useEffect(() => { setTitleDraft(board.title); }, [board.title]);
+
+  const startEditTitle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTitleDraft(board.title);
+    setIsEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.select(), 0);
+  };
+
+  const saveTitle = async () => {
+    setIsEditingTitle(false);
+    const trimmed = titleDraft.trim();
+    if (!trimmed || trimmed === board.title) return;
+    try {
+      await updateBoardTitle(board.id!, trimmed);
+    } catch (error) {
+      console.error("Erro ao renomear quadro:", error);
+    }
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") saveTitle();
+    if (e.key === "Escape") { setIsEditingTitle(false); setTitleDraft(board.title); }
+  };
+
   return (
     <div 
-      onClick={() => navigate(`/board/${board.id}`)}
+      onClick={() => !isEditingTitle && navigate(`/board/${board.id}`)}
       className="bg-blue-600 hover:bg-blue-700 rounded-lg h-32 p-4 cursor-pointer transition-colors shadow-sm group relative flex flex-col justify-between overflow-hidden"
     >
       <div>
-        <h3 className="text-white font-bold text-lg group-hover:underline pr-8 truncate">{board.title}</h3>
+        {isEditingTitle ? (
+          <input
+            ref={titleInputRef}
+            autoFocus
+            value={titleDraft}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onBlur={saveTitle}
+            onKeyDown={handleTitleKeyDown}
+            className="text-lg font-bold bg-blue-500 text-white border border-blue-300 rounded px-2 py-0.5 w-full focus:outline-none focus:ring-2 focus:ring-white"
+          />
+        ) : (
+          <h3
+            className="text-white font-bold text-lg pr-8 truncate"
+            onDoubleClick={startEditTitle}
+            title="Clique duplo para renomear"
+          >
+            {board.title}
+          </h3>
+        )}
         {lists.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1 opacity-80">
             {lists.slice(0, 3).map(list => (
@@ -36,13 +84,15 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
         )}
         {lists.length === 0 && <span className="text-xs text-blue-200 mt-2 block">Vazio (Nenhuma lista)</span>}
       </div>
-      <button
-        onClick={(e) => onDelete(e, board.id!)}
-        className="absolute top-3 right-3 p-1.5 text-blue-200 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-blue-800/50 rounded transition-all"
-        title="Excluir quadro"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-      </button>
+      {!isEditingTitle && (
+        <button
+          onClick={(e) => onDelete(e, board.id!)}
+          className="absolute top-3 right-3 p-1.5 text-blue-200 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-blue-800/50 rounded transition-all"
+          title="Excluir quadro"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+        </button>
+      )}
     </div>
   );
 };

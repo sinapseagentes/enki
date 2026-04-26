@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { CardItem } from "./CardItem";
 import type { List, Card } from "../types";
-import { deleteList } from "../services/listService";
+import { deleteList, updateListTitle } from "../services/listService";
 
 interface ListContainerProps {
   list: List;
@@ -15,6 +15,9 @@ interface ListContainerProps {
 export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: ListContainerProps) => {
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(list.title);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddCard = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +37,28 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
     }
   };
 
+  const startEditTitle = () => {
+    setTitleDraft(list.title);
+    setIsEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.select(), 0);
+  };
+
+  const saveTitle = async () => {
+    setIsEditingTitle(false);
+    const trimmed = titleDraft.trim();
+    if (!trimmed || trimmed === list.title) return;
+    try {
+      await updateListTitle(list.id!, trimmed);
+    } catch (error) {
+      console.error("Erro ao renomear lista:", error);
+    }
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") saveTitle();
+    if (e.key === "Escape") { setIsEditingTitle(false); setTitleDraft(list.title); }
+  };
+
   return (
     <Draggable draggableId={list.id!} index={index}>
       {(provided, snapshot) => (
@@ -46,17 +71,37 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
         >
           {/* List Header (Drag Handle) */}
           <div
-            {...provided.dragHandleProps}
-            className="p-3 font-semibold text-gray-800 flex justify-between items-center cursor-grab active:cursor-grabbing group"
+            {...(!isEditingTitle ? provided.dragHandleProps : {})}
+            className="p-3 font-semibold text-gray-800 flex justify-between items-center group"
           >
-            <h2 className="text-sm">{list.title}</h2>
-            <button
-              onClick={handleDeleteList}
-              className="p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-600 hover:bg-gray-200 rounded transition-all"
-              title="Excluir lista"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </button>
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef}
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={saveTitle}
+                onKeyDown={handleTitleKeyDown}
+                className="text-sm font-semibold bg-white border border-blue-400 rounded px-2 py-0.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            ) : (
+              <h2
+                className="text-sm cursor-pointer hover:bg-gray-200 rounded px-1 py-0.5 w-full truncate"
+                onClick={startEditTitle}
+                title="Clique para renomear"
+              >
+                {list.title}
+              </h2>
+            )}
+            {!isEditingTitle && (
+              <button
+                onClick={handleDeleteList}
+                className="ml-1 p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-600 hover:bg-gray-200 rounded transition-all shrink-0"
+                title="Excluir lista"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            )}
           </div>
 
           {/* Cards Droppable Area */}

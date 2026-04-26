@@ -43,6 +43,11 @@ export const updateListOrder = async (listId: string, newOrder: number) => {
   await updateDoc(listRef, { order: newOrder });
 };
 
+export const updateListTitle = async (listId: string, title: string) => {
+  const listRef = doc(db, LISTS_COLLECTION, listId);
+  await updateDoc(listRef, { title });
+};
+
 export const deleteList = async (listId: string) => {
   const listRef = doc(db, LISTS_COLLECTION, listId);
   await deleteDoc(listRef);
