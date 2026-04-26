@@ -8,12 +8,19 @@ interface CardItemProps {
   onClick: () => void;
 }
 
-const formatDueDate = (ts: number) => {
-  const date = new Date(ts);
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-};
-
 export const CardItem = ({ card, index, onClick }: CardItemProps) => {
+  const isOverdue = card.dueDate ? card.dueDate < Date.now() : false;
+  const isDueSoon = card.dueDate ? (card.dueDate - Date.now() < 24 * 60 * 60 * 1000) && !isOverdue : false;
+  const isCompleted = card.checklists && card.checklists.length > 0 && card.checklists.every(i => i.completed);
+  const isToday = card.dueDate ? new Date(card.dueDate).toDateString() === new Date().toDateString() : false;
+
+  const getDueDateBadgeClass = () => {
+    if (isCompleted) return "bg-green-100 text-green-700";
+    if (isOverdue) return "bg-red-100 text-red-700 animate-pulse";
+    if (isDueSoon) return "bg-orange-100 text-orange-700";
+    return "bg-gray-100 text-gray-600";
+  };
+
   const handleArchive = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm("Tem certeza que deseja arquivar este cartão?")) {
@@ -34,7 +41,10 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
     }
   };
 
-  const isOverdue = card.dueDate ? card.dueDate < Date.now() : false;
+  const formatDueDate = (ts: number) => {
+    const date = new Date(ts);
+    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  };
 
   return (
     <Draggable draggableId={card.id!} index={index}>
@@ -72,17 +82,16 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
                   </div>
                 )}
                 {card.dueDate && (
-                  <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
-                    isOverdue ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"
-                  }`}>
+                  <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${getDueDateBadgeClass()}`}>
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     {formatDueDate(card.dueDate)}
-                    {isOverdue && " · Atrasado"}
+                    {isToday && !isCompleted && " · HOJE"}
+                    {isOverdue && !isCompleted && " · ATRASADO"}
                   </span>
                 )}
                 {card.checklists && card.checklists.length > 0 && (
-                  <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
-                    card.checklists.every(i => i.completed) ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                  <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-bold ${
+                    isCompleted ? "bg-green-600 text-white" : "bg-gray-100 text-gray-600"
                   }`}>
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
                     {card.checklists.filter(i => i.completed).length}/{card.checklists.length}
