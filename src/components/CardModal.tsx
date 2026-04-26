@@ -21,6 +21,9 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
   const [colorLabel, setColorLabel] = useState(card.colorLabel || "");
+  const [dueDate, setDueDate] = useState(
+    card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 16) : ""
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   // Close on Escape key
@@ -40,6 +43,7 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
         title,
         description,
         colorLabel: colorLabel || "",
+        dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
       });
       onClose();
     } catch (error) {
@@ -114,6 +118,24 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
                     />
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Data de Entrega</h4>
+                <input
+                  type="datetime-local"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full text-sm border border-gray-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {dueDate && (
+                  <button
+                    onClick={() => setDueDate("")}
+                    className="mt-1 text-xs text-red-500 hover:text-red-700"
+                  >
+                    Remover data
+                  </button>
+                )}
               </div>
 
               <div className="mt-4 pt-4 border-t border-gray-100">

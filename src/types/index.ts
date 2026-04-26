@@ -29,6 +29,7 @@ export interface Card {
   title: string;
   description?: string;
   colorLabel?: string; // Hex color code
+  dueDate?: number;    // Unix timestamp (ms)
   order: number;
   createdAt: number;
 }
