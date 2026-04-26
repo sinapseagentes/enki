@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext";
+import { NotificationBell } from "../components/NotificationBell";
 import { createBoard, subscribeToBoards, archiveBoard, restoreBoard, updateBoardTitle } from "../services/boardService";
 import { subscribeToLists } from "../services/listService";
 import type { Board, List } from "../types";
@@ -195,6 +196,7 @@ export const Dashboard = () => {
           <span className="text-xl font-bold tracking-wide">Ollert</span>
         </div>
         <div className="flex items-center gap-4">
+          <NotificationBell />
           <span className="text-sm font-medium hidden sm:block">{user?.displayName}</span>
           {user?.photoURL && (
             <img src={user.photoURL} alt="Avatar" className="w-8 h-8 rounded-full border-2 border-blue-400" />

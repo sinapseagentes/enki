@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "./AuthContext";
-import { subscribeToNotifications, markAsRead } from "../services/notificationService";
+import { subscribeToNotifications } from "../services/notificationService";
 
 type NotificationType = "success" | "error" | "info" | "warning";
 
@@ -47,9 +47,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const newest = firestoreNotifs[0];
         if (newest && (Date.now() - newest.createdAt < 10000)) { // Only if recent
           showNotification(`${newest.senderName}: ${newest.message}`, "info");
-          // Mark as read after showing toast? Or keep for the notification center?
-          // Let's mark as read for now to not repeat, or we could have a "bell" UI later.
-          markAsRead(newest.id!);
         }
       }
       lastNotifCount.current = firestoreNotifs.length;

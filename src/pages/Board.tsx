@@ -11,6 +11,7 @@ import { ListContainer } from "../components/ListContainer";
 import { CardModal } from "../components/CardModal";
 import { InviteModal } from "../components/InviteModal";
 import { ActivityLog } from "../components/ActivityLog";
+import { NotificationBell } from "../components/NotificationBell";
 import type { List, Card, Board } from "../types";
 
 const COLORS = [
@@ -263,13 +264,22 @@ export const BoardPage = () => {
             ))}
           </div>
 
-          <button 
-            onClick={() => setShowActivities(!showActivities)}
-            className="flex items-center gap-2 hover:bg-white/20 px-3 py-1.5 rounded transition-colors text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span className="hidden lg:inline">Histórico</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <button 
+              onClick={() => setShowActivities(!showActivities)}
+              className={`p-2 rounded-full transition-all ${showActivities ? "bg-white text-blue-600" : "text-white/80 hover:text-white hover:bg-white/10"}`}
+              title="Histórico de Atividades"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </button>
+            <button 
+              onClick={() => setIsInviting(true)}
+              className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-1.5 rounded-md flex items-center gap-2 transition-all"
+            >
+              Convidar
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
