@@ -401,6 +401,7 @@ export const BoardPage = () => {
       {activeCard && (
         <CardModal 
           card={activeCard} 
+          board={board || undefined}
           onClose={() => setActiveCard(null)} 
         />
       )}

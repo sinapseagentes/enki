@@ -80,3 +80,14 @@ export interface Card {
   archived?: boolean;
   createdAt: number;
 }
+
+export interface AppNotification {
+  id?: string;
+  userId: string; // Recipient
+  senderName: string;
+  message: string;
+  cardId?: string;
+  boardId: string;
+  read: boolean;
+  createdAt: number;
+}

@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+import { useAuth } from "./AuthContext";
+import { subscribeToNotifications, markAsRead } from "../services/notificationService";
 
 type NotificationType = "success" | "error" | "info" | "warning";
 
@@ -15,7 +17,9 @@ interface NotificationContextData {
 const NotificationContext = createContext<NotificationContextData>({} as NotificationContextData);
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const lastNotifCount = useRef(0);
 
   const removeNotification = useCallback((id: string) => {
     setNotifications((state) => state.filter((n) => n.id !== id));
@@ -30,8 +34,29 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Auto remove after 3 seconds
     setTimeout(() => {
       removeNotification(id);
-    }, 3000);
+    }, 4000);
   }, [removeNotification]);
+
+  // Listen to Firestore Notifications (Cross-User)
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubscribe = subscribeToNotifications(user.uid, (firestoreNotifs) => {
+      // If we have more notifications than before, show toast for the newest ones
+      if (firestoreNotifs.length > lastNotifCount.current) {
+        const newest = firestoreNotifs[0];
+        if (newest && (Date.now() - newest.createdAt < 10000)) { // Only if recent
+          showNotification(`${newest.senderName}: ${newest.message}`, "info");
+          // Mark as read after showing toast? Or keep for the notification center?
+          // Let's mark as read for now to not repeat, or we could have a "bell" UI later.
+          markAsRead(newest.id!);
+        }
+      }
+      lastNotifCount.current = firestoreNotifs.length;
+    });
+
+    return () => unsubscribe();
+  }, [user, showNotification]);
 
   return (
     <NotificationContext.Provider value={{ showNotification }}>

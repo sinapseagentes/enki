@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
-import type { Card, ChecklistItem, Comment, Attachment } from "../types";
+import type { Card, ChecklistItem, Comment, Attachment, Board } from "../types";
 import { updateCard } from "../services/cardService";
 import { addComment, subscribeToComments } from "../services/commentService";
 import { uploadFile } from "../services/storageService";
 import { logActivity } from "../services/activityService";
+import { sendNotification } from "../services/notificationService";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext";
 import confetti from "canvas-confetti";
 
 interface CardModalProps {
   card: Card;
+  board?: Board;
   onClose: () => void;
 }
 
@@ -23,7 +25,7 @@ const COLORS = [
   "#a8a29e", // gray
 ];
 
-export const CardModal = ({ card, onClose }: CardModalProps) => {
+export const CardModal = ({ card, board, onClose }: CardModalProps) => {
   const { user } = useAuth();
   const { showNotification } = useNotification();
   const [title, setTitle] = useState(card.title);
@@ -106,6 +108,20 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
           text: newComment.trim().substring(0, 50) + (newComment.length > 50 ? "..." : "")
         }
       });
+
+      // Notify other members
+      if (board?.members) {
+        const others = board.members.filter(m => m !== user.uid);
+        others.forEach(memberId => {
+          sendNotification({
+            userId: memberId,
+            senderName: user.displayName || "Alguém",
+            message: `comentou no cartão "${card.title}"`,
+            cardId: card.id,
+            boardId: card.boardId,
+          });
+        });
+      }
 
       setNewComment("");
     } catch (error) {
