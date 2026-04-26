@@ -7,6 +7,7 @@ import { subscribeToLists, createList, updateListOrder } from "../services/listS
 import { subscribeToCards, createCard, updateCard } from "../services/cardService";
 import { ListContainer } from "../components/ListContainer";
 import { CardModal } from "../components/CardModal";
+import { InviteModal } from "../components/InviteModal";
 import type { List, Card } from "../types";
 
 export const BoardPage = () => {
@@ -19,6 +20,7 @@ export const BoardPage = () => {
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState("");
   const [activeCard, setActiveCard] = useState<Card | null>(null);
+  const [isInviting, setIsInviting] = useState(false);
 
   useEffect(() => {
     if (!boardId) return;
@@ -77,15 +79,11 @@ export const BoardPage = () => {
 
       // Save to db
       try {
-        // Simple strategy: update the moved list's order to destination.index
-        // A better approach in production is using floating point orders or updating all affected,
-        // but for this MVP we'll update all affected lists to ensure integrity.
         await Promise.all(
           newLists.map((list, index) => updateListOrder(list.id!, index))
         );
       } catch (error) {
         console.error("Error updating list order:", error);
-        // Revert could be implemented here
       }
       return;
     }
@@ -99,12 +97,10 @@ export const BoardPage = () => {
       const movedCard = newCards[movedCardIndex];
 
       if (sourceListId === destinationListId) {
-        // Moving within same list
         const listCards = newCards.filter(c => c.listId === sourceListId).sort((a,b) => a.order - b.order);
         listCards.splice(source.index, 1);
         listCards.splice(destination.index, 0, movedCard);
         
-        // Optimistic update
         const updatedCards = newCards.map(c => {
           if (c.listId === sourceListId) {
             const newIndex = listCards.findIndex(lc => lc.id === c.id);
@@ -114,7 +110,6 @@ export const BoardPage = () => {
         });
         setCards(updatedCards);
 
-        // Save
         try {
           await Promise.all(
             listCards.map((c, idx) => updateCard(c.id!, { order: idx }))
@@ -123,7 +118,6 @@ export const BoardPage = () => {
           console.error("Error updating cards order:", error);
         }
       } else {
-        // Moving to a different list
         movedCard.listId = destinationListId;
         
         const sourceListCards = newCards.filter(c => c.listId === sourceListId && c.id !== draggableId).sort((a,b) => a.order - b.order);
@@ -131,7 +125,6 @@ export const BoardPage = () => {
         
         destListCards.splice(destination.index, 0, movedCard);
 
-        // Optimistic
         const updatedCards = newCards.map(c => {
           if (c.id === movedCard.id) return { ...c, listId: destinationListId, order: destination.index };
           if (c.listId === sourceListId) {
@@ -146,7 +139,6 @@ export const BoardPage = () => {
         });
         setCards(updatedCards);
 
-        // Save
         try {
           await Promise.all([
             ...sourceListCards.map((c, idx) => updateCard(c.id!, { order: idx })),
@@ -173,7 +165,14 @@ export const BoardPage = () => {
           <span className="font-bold text-lg">Quadro</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm bg-white/20 px-3 py-1.5 rounded font-medium">
+          <button
+            onClick={() => setIsInviting(true)}
+            className="text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded font-medium transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+            Compartilhar
+          </button>
+          <span className="text-sm bg-white/20 px-3 py-1.5 rounded font-medium ml-2">
             {user?.displayName}
           </span>
         </div>
@@ -256,6 +255,14 @@ export const BoardPage = () => {
         <CardModal 
           card={activeCard} 
           onClose={() => setActiveCard(null)} 
+        />
+      )}
+
+      {/* Invite Modal */}
+      {isInviting && boardId && (
+        <InviteModal
+          boardId={boardId}
+          onClose={() => setIsInviting(false)}
         />
       )}
     </div>

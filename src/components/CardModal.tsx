@@ -39,7 +39,7 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
       await updateCard(card.id!, {
         title,
         description,
-        colorLabel: colorLabel || null,
+        colorLabel: colorLabel || "",
       });
       onClose();
     } catch (error) {
