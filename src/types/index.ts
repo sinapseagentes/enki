@@ -24,6 +24,12 @@ export interface List {
   createdAt: number;
 }
 
+export interface ChecklistItem {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface Card {
   id?: string;
   listId: string;
@@ -32,6 +38,7 @@ export interface Card {
   description?: string;
   colorLabel?: string; // Hex color code
   dueDate?: number;    // Unix timestamp (ms)
+  checklists?: ChecklistItem[];
   order: number;
   archived?: boolean;
   createdAt: number;

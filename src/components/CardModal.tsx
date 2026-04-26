@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Card } from "../types";
+import type { Card, ChecklistItem } from "../types";
 import { updateCard } from "../services/cardService";
 
 interface CardModalProps {
@@ -24,6 +24,8 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
   const [dueDate, setDueDate] = useState(
     card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 16) : ""
   );
+  const [checklists, setChecklists] = useState<ChecklistItem[]>(card.checklists || []);
+  const [newItemTitle, setNewItemTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   // Close on Escape key
@@ -44,6 +46,7 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
         description,
         colorLabel: colorLabel || "",
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
+        checklists,
       });
       onClose();
     } catch (error) {
@@ -52,6 +55,31 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
       setIsSaving(false);
     }
   };
+
+  const addChecklistItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItemTitle.trim()) return;
+    const newItem: ChecklistItem = {
+      id: crypto.randomUUID(),
+      title: newItemTitle.trim(),
+      completed: false,
+    };
+    setChecklists([...checklists, newItem]);
+    setNewItemTitle("");
+  };
+
+  const toggleChecklistItem = (id: string) => {
+    setChecklists(checklists.map(item => 
+      item.id === id ? { ...item, completed: !item.completed } : item
+    ));
+  };
+
+  const removeChecklistItem = (id: string) => {
+    setChecklists(checklists.filter(item => item.id !== id));
+  };
+
+  const completedCount = checklists.filter(i => i.completed).length;
+  const progressPercent = checklists.length > 0 ? Math.round((completedCount / checklists.length) * 100) : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -99,8 +127,72 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Adicione uma descrição mais detalhada..."
-                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                  className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
                 />
+              </div>
+
+              {/* Checklist Section */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                    Checklist
+                  </h3>
+                  <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    {progressPercent}%
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-4 overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-500 ease-out ${progressPercent === 100 ? "bg-green-500" : "bg-blue-500"}`}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  {checklists.map(item => (
+                    <div key={item.id} className="flex items-center gap-3 group">
+                      <input
+                        type="checkbox"
+                        checked={item.completed}
+                        onChange={() => toggleChecklistItem(item.id)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span 
+                        className={`flex-1 text-sm transition-all ${item.completed ? "text-gray-400 line-through" : "text-gray-700"}`}
+                        onClick={() => toggleChecklistItem(item.id)}
+                      >
+                        {item.title}
+                      </span>
+                      <button
+                        onClick={() => removeChecklistItem(item.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                        title="Remover item"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <form onSubmit={addChecklistItem} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newItemTitle}
+                    onChange={(e) => setNewItemTitle(e.target.value)}
+                    placeholder="Adicionar um item..."
+                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newItemTitle.trim()}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-3 py-1.5 rounded-md font-medium disabled:opacity-50 transition-colors"
+                  >
+                    Adicionar
+                  </button>
+                </form>
               </div>
             </div>
 
