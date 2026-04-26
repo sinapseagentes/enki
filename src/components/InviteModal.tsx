@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { inviteUserToBoard } from "../services/boardService";
+import { sendNotification } from "../services/notificationService";
+import { useAuth } from "../contexts/AuthContext";
 
 interface InviteModalProps {
   boardId: string;
+  boardTitle: string;
   onClose: () => void;
 }
 
-export const InviteModal = ({ boardId, onClose }: InviteModalProps) => {
+export const InviteModal = ({ boardId, boardTitle, onClose }: InviteModalProps) => {
+  const { user: currentUser } = useAuth();
   const [email, setEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
   const [error, setError] = useState("");
@@ -33,7 +37,18 @@ export const InviteModal = ({ boardId, onClose }: InviteModalProps) => {
     setSuccess(false);
 
     try {
-      await inviteUserToBoard(boardId, email.trim());
+      const invitedUid = await inviteUserToBoard(boardId, email.trim());
+      
+      // Notify the invited user
+      if (invitedUid && currentUser) {
+        await sendNotification({
+          userId: invitedUid,
+          senderName: currentUser.displayName || "Alguém",
+          message: `convidou você para o quadro "${boardTitle}"`,
+          boardId: boardId,
+        });
+      }
+
       setSuccess(true);
       setEmail("");
       setTimeout(() => onClose(), 2000);

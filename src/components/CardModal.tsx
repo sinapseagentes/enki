@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Card, ChecklistItem, Comment, Attachment, Board } from "../types";
+import type { Card, ChecklistItem, Comment, Attachment, Board, UserProfile } from "../types";
 import { updateCard } from "../services/cardService";
 import { addComment, subscribeToComments } from "../services/commentService";
 import { uploadFile } from "../services/storageService";
@@ -12,6 +12,7 @@ import confetti from "canvas-confetti";
 interface CardModalProps {
   card: Card;
   board?: Board;
+  boardMembers?: UserProfile[];
   onClose: () => void;
 }
 
@@ -25,7 +26,7 @@ const COLORS = [
   "#a8a29e", // gray
 ];
 
-export const CardModal = ({ card, board, onClose }: CardModalProps) => {
+export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps) => {
   const { user } = useAuth();
   const { showNotification } = useNotification();
   const [title, setTitle] = useState(card.title);
@@ -112,11 +113,33 @@ export const CardModal = ({ card, board, onClose }: CardModalProps) => {
       // Notify other members
       if (board?.members) {
         const others = board.members.filter(m => m !== user.uid);
+        
+        // Detect mentions
+        const mentionRegex = /@(\w+)/g;
+        const matches = [...newComment.matchAll(mentionRegex)];
+        const mentionedUserIds = new Set<string>();
+
+        if (boardMembers) {
+          matches.forEach(match => {
+            const name = match[1].toLowerCase();
+            const mentioned = boardMembers.find(m => 
+              m.displayName?.toLowerCase().includes(name) || 
+              m.email?.toLowerCase().includes(name)
+            );
+            if (mentioned && mentioned.uid !== user.uid) {
+              mentionedUserIds.add(mentioned.uid);
+            }
+          });
+        }
+
         others.forEach(memberId => {
+          const isMentioned = mentionedUserIds.has(memberId);
           sendNotification({
             userId: memberId,
             senderName: user.displayName || "Alguém",
-            message: `comentou no cartão "${card.title}"`,
+            message: isMentioned 
+              ? `mencionou você no cartão "${card.title}"` 
+              : `comentou no cartão "${card.title}"`,
             cardId: card.id,
             boardId: card.boardId,
           });

@@ -93,4 +93,6 @@ export const inviteUserToBoard = async (boardId: string, email: string) => {
   await updateDoc(boardRef, {
     members: arrayUnion(uid)
   });
+
+  return uid;
 };

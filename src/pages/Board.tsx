@@ -412,12 +412,14 @@ export const BoardPage = () => {
         <CardModal 
           card={activeCard} 
           board={board || undefined}
+          boardMembers={members}
           onClose={() => setActiveCard(null)} 
         />
       )}
       {isInviting && boardId && (
         <InviteModal
           boardId={boardId}
+          boardTitle={board?.title || ""}
           onClose={() => setIsInviting(false)}
         />
       )}
