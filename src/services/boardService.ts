@@ -32,12 +32,20 @@ export const subscribeToBoards = (
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const boards: Board[] = [];
     snapshot.forEach((doc) => {
-      boards.push({ id: doc.id, ...doc.data() } as Board);
+      const data = doc.data();
+      if (!data.archived) {
+        boards.push({ id: doc.id, ...data } as Board);
+      }
     });
     callback(boards);
   }, (error) => {
     console.error("Error listening to boards:", error);
   });
+};
+
+export const archiveBoard = async (boardId: string) => {
+  const boardRef = doc(db, BOARDS_COLLECTION, boardId);
+  await updateDoc(boardRef, { archived: true });
 };
 
 export const deleteBoard = async (boardId: string) => {

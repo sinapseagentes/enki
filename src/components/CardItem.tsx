@@ -1,6 +1,6 @@
 import { Draggable } from "@hello-pangea/dnd";
 import type { Card } from "../types";
-import { deleteCard } from "../services/cardService";
+import { archiveCard } from "../services/cardService";
 
 interface CardItemProps {
   card: Card;
@@ -14,13 +14,13 @@ const formatDueDate = (ts: number) => {
 };
 
 export const CardItem = ({ card, index, onClick }: CardItemProps) => {
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleArchive = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Tem certeza que deseja excluir este cartão?")) {
+    if (confirm("Tem certeza que deseja arquivar este cartão?")) {
       try {
-        await deleteCard(card.id!);
+        await archiveCard(card.id!);
       } catch (error) {
-        console.error("Erro ao excluir cartão:", error);
+        console.error("Erro ao arquivar cartão:", error);
       }
     }
   };
@@ -64,11 +64,11 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
             )}
 
             <button
-              onClick={handleDelete}
-              className="absolute top-2 right-2 p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-600 hover:bg-red-50 rounded transition-all"
-              title="Excluir cartão"
+              onClick={handleArchive}
+              className="absolute top-2 right-2 p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
+              title="Arquivar cartão"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
             </button>
           </div>
         </div>

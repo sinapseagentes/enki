@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { createBoard, subscribeToBoards, deleteBoard, updateBoardTitle } from "../services/boardService";
+import { createBoard, subscribeToBoards, archiveBoard, updateBoardTitle } from "../services/boardService";
 import { subscribeToLists } from "../services/listService";
 import type { Board, List } from "../types";
 
-const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.MouseEvent, id: string) => void }) => {
+const BoardCard = ({ board, onArchive }: { board: Board, onArchive: (e: React.MouseEvent, id: string) => void }) => {
   const navigate = useNavigate();
   const [lists, setLists] = useState<List[]>([]);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -97,14 +97,14 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
         {lists.length === 0 && <span className="text-xs text-blue-200 mt-2 block">Vazio (Nenhuma lista)</span>}
       </div>
 
-      {/* Delete button */}
+      {/* Archive button */}
       {!isEditingTitle && (
         <button
-          onClick={(e) => onDelete(e, board.id!)}
+          onClick={(e) => onArchive(e, board.id!)}
           className="absolute top-3 right-3 p-1.5 text-blue-200 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-blue-800/50 rounded transition-all"
-          title="Excluir quadro"
+          title="Arquivar quadro"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
         </button>
       )}
     </div>
@@ -140,13 +140,13 @@ export const Dashboard = () => {
     }
   };
 
-  const handleDeleteBoard = async (e: React.MouseEvent, boardId: string) => {
+  const handleArchiveBoard = async (e: React.MouseEvent, boardId: string) => {
     e.stopPropagation();
-    if (confirm("Tem certeza que deseja excluir este quadro? Todos os dados serão perdidos.")) {
+    if (confirm("Tem certeza que deseja arquivar este quadro? Ele não aparecerá mais na sua lista.")) {
       try {
-        await deleteBoard(boardId);
+        await archiveBoard(boardId);
       } catch (error) {
-        console.error("Erro ao excluir quadro:", error);
+        console.error("Erro ao arquivar quadro:", error);
       }
     }
   };
@@ -222,7 +222,7 @@ export const Dashboard = () => {
 
           {/* List existing boards */}
           {boards.map(board => (
-            <BoardCard key={board.id} board={board} onDelete={handleDeleteBoard} />
+            <BoardCard key={board.id} board={board} onArchive={handleArchiveBoard} />
           ))}
         </div>
       </main>

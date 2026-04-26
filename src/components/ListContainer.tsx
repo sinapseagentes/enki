@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { CardItem } from "./CardItem";
 import type { List, Card } from "../types";
-import { deleteList, updateListTitle } from "../services/listService";
+import { archiveList, updateListTitle } from "../services/listService";
 
 interface ListContainerProps {
   list: List;
@@ -27,12 +27,12 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
     setIsAddingCard(false);
   };
 
-  const handleDeleteList = async () => {
-    if (confirm("Tem certeza que deseja excluir esta lista e TODOS os cartões nela?")) {
+  const handleArchiveList = async () => {
+    if (confirm("Tem certeza que deseja arquivar esta lista? Ela não aparecerá mais no quadro.")) {
       try {
-        await deleteList(list.id!);
+        await archiveList(list.id!);
       } catch (error) {
-        console.error("Erro ao excluir lista:", error);
+        console.error("Erro ao arquivar lista:", error);
       }
     }
   };
@@ -95,11 +95,11 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
             )}
             {!isEditingTitle && (
               <button
-                onClick={handleDeleteList}
-                className="ml-1 p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-600 hover:bg-gray-200 rounded transition-all shrink-0"
-                title="Excluir lista"
+                onClick={handleArchiveList}
+                className="ml-1 p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-gray-200 rounded transition-all shrink-0"
+                title="Arquivar lista"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
               </button>
             )}
           </div>

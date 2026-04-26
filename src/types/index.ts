@@ -10,6 +10,7 @@ export interface Board {
   title: string;
   ownerId: string;
   members: string[]; // array of user UIDs
+  archived?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -19,6 +20,7 @@ export interface List {
   boardId: string;
   title: string;
   order: number;
+  archived?: boolean;
   createdAt: number;
 }
 
@@ -31,5 +33,6 @@ export interface Card {
   colorLabel?: string; // Hex color code
   dueDate?: number;    // Unix timestamp (ms)
   order: number;
+  archived?: boolean;
   createdAt: number;
 }

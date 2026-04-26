@@ -31,7 +31,10 @@ export const subscribeToCards = (
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const cards: Card[] = [];
     snapshot.forEach((doc) => {
-      cards.push({ id: doc.id, ...doc.data() } as Card);
+      const data = doc.data();
+      if (!data.archived) {
+        cards.push({ id: doc.id, ...data } as Card);
+      }
     });
     callback(cards);
   }, (error) => {
@@ -42,6 +45,11 @@ export const subscribeToCards = (
 export const updateCard = async (cardId: string, updates: Partial<Card>) => {
   const cardRef = doc(db, CARDS_COLLECTION, cardId);
   await updateDoc(cardRef, updates);
+};
+
+export const archiveCard = async (cardId: string) => {
+  const cardRef = doc(db, CARDS_COLLECTION, cardId);
+  await updateDoc(cardRef, { archived: true });
 };
 
 export const deleteCard = async (cardId: string) => {
