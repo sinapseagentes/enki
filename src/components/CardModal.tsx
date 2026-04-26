@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import type { Card, ChecklistItem, Comment } from "../types";
+import type { Card, ChecklistItem, Comment, Attachment } from "../types";
 import { updateCard } from "../services/cardService";
 import { addComment, subscribeToComments } from "../services/commentService";
+import { uploadFile } from "../services/storageService";
 import { logActivity } from "../services/activityService";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -29,10 +30,13 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
     card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 16) : ""
   );
   const [checklists, setChecklists] = useState<ChecklistItem[]>(card.checklists || []);
+  const [attachments, setAttachments] = useState<Attachment[]>(card.attachments || []);
+  const [coverUrl, setCoverUrl] = useState(card.coverUrl || "");
   const [newItemTitle, setNewItemTitle] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -62,6 +66,8 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
         colorLabel: colorLabel || "",
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
         checklists,
+        attachments,
+        coverUrl,
       });
       onClose();
     } catch (error) {
@@ -100,6 +106,50 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
     } catch (error) {
       console.error("Erro ao adicionar comentário:", error);
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !card.id || !user) return;
+
+    setIsUploading(true);
+    try {
+      const url = await uploadFile(card.id, file);
+      const newAttachment: Attachment = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        url,
+        type: file.type,
+        createdAt: Date.now(),
+      };
+      
+      const updatedAttachments = [...attachments, newAttachment];
+      setAttachments(updatedAttachments);
+      
+      // Auto-set as cover if it's the first image
+      if (file.type.startsWith("image/") && !coverUrl) {
+        setCoverUrl(url);
+      }
+
+      await logActivity({
+        boardId: card.boardId,
+        userId: user.uid,
+        userName: user.displayName || "Usuário",
+        type: "board_updated", // Using board_updated as a generic card change for now
+        details: { cardTitle: card.title, text: `anexou ${file.name}` }
+      });
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      alert("Falha ao enviar arquivo. Verifique se o Emulador de Storage está rodando.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeAttachment = (id: string) => {
+    const removed = attachments.find(a => a.id === id);
+    if (removed?.url === coverUrl) setCoverUrl("");
+    setAttachments(attachments.filter(a => a.id !== id));
   };
 
   const addChecklistItem = (e: React.FormEvent) => {
@@ -141,8 +191,19 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
       <div className="absolute inset-0" onClick={onClose}></div>
 
       <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
-        {/* Header Color Bar */}
-        {colorLabel && (
+        {/* Card Cover */}
+        {coverUrl ? (
+          <div className="relative h-48 w-full group">
+            <img src={coverUrl} alt="Capa" className="w-full h-full object-cover rounded-t-xl" />
+            <button 
+              onClick={() => setCoverUrl("")}
+              className="absolute top-2 right-12 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Remover Capa"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+          </div>
+        ) : colorLabel && (
           <div 
             className="h-16 w-full rounded-t-xl" 
             style={{ backgroundColor: colorLabel }}
@@ -247,6 +308,60 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
                     Adicionar
                   </button>
                 </form>
+              </div>
+
+              {/* Attachments Section */}
+              <div className="pt-4 border-t border-gray-100">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                    Anexos
+                  </h3>
+                  <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-3 py-1.5 rounded-md font-medium transition-colors">
+                    {isUploading ? "Enviando..." : "Adicionar"}
+                    <input type="file" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
+                  </label>
+                </div>
+
+                <div className="space-y-3">
+                  {attachments.map((file) => (
+                    <div key={file.id} className="flex gap-4 group bg-gray-50 hover:bg-gray-100 p-2 rounded-lg transition-colors">
+                      {file.type.startsWith("image/") ? (
+                        <div className="w-24 h-20 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                          <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-24 h-20 bg-blue-100 rounded flex items-center justify-center text-blue-500 flex-shrink-0">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <p className="text-sm font-bold text-gray-800 truncate" title={file.name}>{file.name}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                          <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                          <button 
+                            onClick={() => removeAttachment(file.id)}
+                            className="underline hover:text-red-600"
+                          >
+                            Remover
+                          </button>
+                          {file.type.startsWith("image/") && (
+                            <button 
+                              onClick={() => setCoverUrl(file.url)}
+                              className="underline hover:text-blue-600"
+                            >
+                              {coverUrl === file.url ? "Capa atual" : "Tornar capa"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {attachments.length === 0 && (
+                    <p className="text-center text-gray-400 text-xs italic py-2">Nenhum anexo.</p>
+                  )}
+                </div>
               </div>
 
               {/* Comments Section */}

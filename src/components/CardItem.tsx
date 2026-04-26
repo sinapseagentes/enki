@@ -48,17 +48,28 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
             card.archived ? "bg-gray-200 border-gray-300 opacity-75 grayscale" : "bg-white border-gray-200 hover:bg-gray-50"
           } ${snapshot.isDragging ? "shadow-lg rotate-2 scale-105" : ""}`}
         >
-          {card.colorLabel && (
+          {card.colorLabel && !card.coverUrl && (
             <div className="h-2 w-full" style={{ backgroundColor: card.colorLabel }} />
+          )}
+          {card.coverUrl && (
+            <img src={card.coverUrl} alt="" className="w-full h-32 object-cover border-b" />
           )}
           <div className="p-3">
             <p className="text-sm text-gray-800 break-words pr-6">{card.title}</p>
 
-            {/* Badges: description icon + due date */}
-            {(card.description || card.dueDate) && (
+            {/* Badges: description icon + due date + attachments */}
+            {(card.description || card.dueDate || (card.attachments && card.attachments.length > 0)) && (
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 {card.description && (
-                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+                  <div className="text-gray-400" title="Este cartão possui uma descrição">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+                  </div>
+                )}
+                {card.attachments && card.attachments.length > 0 && (
+                  <div className="text-gray-400 flex items-center gap-0.5" title={`${card.attachments.length} anexos`}>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                    <span className="text-[10px] font-bold">{card.attachments.length}</span>
+                  </div>
                 )}
                 {card.dueDate && (
                   <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${

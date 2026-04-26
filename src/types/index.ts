@@ -57,6 +57,14 @@ export interface Comment {
   createdAt: number;
 }
 
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  createdAt: number;
+}
+
 export interface Card {
   id?: string;
   listId: string;
@@ -66,6 +74,8 @@ export interface Card {
   colorLabel?: string; // Hex color code
   dueDate?: number;    // Unix timestamp (ms)
   checklists?: ChecklistItem[];
+  attachments?: Attachment[];
+  coverUrl?: string;
   order: number;
   archived?: boolean;
   createdAt: number;
