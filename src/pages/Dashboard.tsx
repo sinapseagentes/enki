@@ -20,16 +20,17 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
     return () => unsubscribe();
   }, [board.id]);
 
-  // Sync title only when NOT editing (avoid overwriting user input)
+  // Sync title only when NOT editing
   useEffect(() => {
     if (!isEditingTitle) setTitleDraft(board.title);
   }, [board.title, isEditingTitle]);
 
   const startEditTitle = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
+    isSavingRef.current = false;
     setTitleDraft(board.title);
     setIsEditingTitle(true);
-    isSavingRef.current = false;
   };
 
   const saveTitle = async (draft: string) => {
@@ -37,10 +38,7 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
     isSavingRef.current = true;
     setIsEditingTitle(false);
     const trimmed = draft.trim();
-    if (!trimmed || trimmed === board.title) {
-      isSavingRef.current = false;
-      return;
-    }
+    if (!trimmed || trimmed === board.title) { isSavingRef.current = false; return; }
     try {
       await updateBoardTitle(board.id!, trimmed);
     } catch (error) {
@@ -50,8 +48,8 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
     }
   };
 
-  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") { e.preventDefault(); saveTitle(titleDraft); }
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") { e.preventDefault(); saveTitle(e.currentTarget.value); }
     if (e.key === "Escape") { setIsEditingTitle(false); setTitleDraft(board.title); }
   };
 
@@ -67,18 +65,24 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
             value={titleDraft}
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => setTitleDraft(e.target.value)}
-            onBlur={() => saveTitle(titleDraft)}
-            onKeyDown={handleTitleKeyDown}
+            onBlur={(e) => saveTitle(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="text-lg font-bold bg-blue-500 text-white border border-blue-300 rounded px-2 py-0.5 w-full focus:outline-none focus:ring-2 focus:ring-white"
           />
         ) : (
-          <h3
-            className="text-white font-bold text-lg pr-8 truncate"
-            onDoubleClick={startEditTitle}
-            title="Clique duplo para renomear"
-          >
-            {board.title}
-          </h3>
+          <div className="flex items-start gap-1 pr-8">
+            <h3 className="text-white font-bold text-lg truncate flex-1">{board.title}</h3>
+            {/* Pencil icon — triggers rename, visible on hover */}
+            <button
+              onClick={startEditTitle}
+              className="shrink-0 p-1 text-blue-200 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-blue-800/50 rounded transition-all mt-0.5"
+              title="Renomear quadro"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          </div>
         )}
         {lists.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1 opacity-80">
@@ -92,6 +96,8 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
         )}
         {lists.length === 0 && <span className="text-xs text-blue-200 mt-2 block">Vazio (Nenhuma lista)</span>}
       </div>
+
+      {/* Delete button */}
       {!isEditingTitle && (
         <button
           onClick={(e) => onDelete(e, board.id!)}
