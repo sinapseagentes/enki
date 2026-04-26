@@ -5,9 +5,12 @@ import type { DropResult } from "@hello-pangea/dnd";
 import { subscribeToLists, createList, updateListOrder } from "../services/listService";
 import { subscribeToCards, createCard, updateCard } from "../services/cardService";
 import { subscribeToBoard, getMembersProfile } from "../services/boardService";
+import { logActivity } from "../services/activityService";
+import { useAuth } from "../contexts/AuthContext";
 import { ListContainer } from "../components/ListContainer";
 import { CardModal } from "../components/CardModal";
 import { InviteModal } from "../components/InviteModal";
+import { ActivityLog } from "../components/ActivityLog";
 import type { List, Card, Board } from "../types";
 
 const COLORS = [
@@ -23,6 +26,7 @@ const COLORS = [
 export const BoardPage = () => {
   const { id: boardId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [board, setBoard] = useState<Board | null>(null);
   const [lists, setLists] = useState<List[]>([]);
@@ -34,6 +38,7 @@ export const BoardPage = () => {
   const [isInviting, setIsInviting] = useState(false);
   const [filterColor, setFilterColor] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [showActivities, setShowActivities] = useState(false);
 
   useEffect(() => {
     if (!boardId) return;
@@ -73,6 +78,17 @@ export const BoardPage = () => {
     try {
       const order = lists.length;
       await createList(boardId, newListTitle, order);
+      
+      if (user) {
+        await logActivity({
+          boardId,
+          userId: user.uid,
+          userName: user.displayName || "Usuário",
+          type: "list_created",
+          details: { listTitle: newListTitle }
+        });
+      }
+
       setNewListTitle("");
       setIsAddingList(false);
     } catch (error) {
@@ -86,6 +102,16 @@ export const BoardPage = () => {
       const listCards = cards.filter(c => c.listId === listId);
       const order = listCards.length;
       await createCard(boardId, listId, title, order);
+
+      if (user) {
+        await logActivity({
+          boardId,
+          userId: user.uid,
+          userName: user.displayName || "Usuário",
+          type: "card_created",
+          details: { cardTitle: title }
+        });
+      }
     } catch (error) {
       console.error("Error creating card:", error);
     }
@@ -171,6 +197,22 @@ export const BoardPage = () => {
             ...sourceListCards.map((c, idx) => updateCard(c.id!, { order: idx })),
             ...destListCards.map((c, idx) => updateCard(c.id!, { order: idx, listId: c.id === movedCard.id ? destinationListId : c.listId }))
           ]);
+
+          if (user) {
+            const sourceList = lists.find(l => l.id === sourceListId);
+            const destList = lists.find(l => l.id === destinationListId);
+            await logActivity({
+              boardId: boardId!,
+              userId: user.uid,
+              userName: user.displayName || "Usuário",
+              type: "card_moved",
+              details: { 
+                cardTitle: movedCard.title,
+                fromList: sourceList?.title,
+                toList: destList?.title
+              }
+            });
+          }
         } catch (error) {
           console.error("Error updating cross-list cards:", error);
         }
@@ -220,6 +262,14 @@ export const BoardPage = () => {
               </div>
             ))}
           </div>
+
+          <button 
+            onClick={() => setShowActivities(!showActivities)}
+            className="flex items-center gap-2 hover:bg-white/20 px-3 py-1.5 rounded transition-colors text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span className="hidden lg:inline">Histórico</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-4">
@@ -347,20 +397,21 @@ export const BoardPage = () => {
         </DragDropContext>
       </main>
 
-      {/* Card Detail Modal */}
+      {/* Modais */}
       {activeCard && (
         <CardModal 
           card={activeCard} 
           onClose={() => setActiveCard(null)} 
         />
       )}
-
-      {/* Invite Modal */}
       {isInviting && boardId && (
         <InviteModal
           boardId={boardId}
           onClose={() => setIsInviting(false)}
         />
+      )}
+      {showActivities && boardId && (
+        <ActivityLog boardId={boardId} onClose={() => setShowActivities(false)} />
       )}
     </div>
   );

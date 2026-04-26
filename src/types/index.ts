@@ -30,6 +30,22 @@ export interface ChecklistItem {
   completed: boolean;
 }
 
+export interface Activity {
+  id?: string;
+  boardId: string;
+  userId: string;
+  userName: string;
+  type: "card_created" | "card_moved" | "card_archived" | "list_created" | "list_archived" | "board_updated" | "comment_added";
+  details: {
+    cardTitle?: string;
+    listTitle?: string;
+    fromList?: string;
+    toList?: string;
+    text?: string;
+  };
+  createdAt: number;
+}
+
 export interface Card {
   id?: string;
   listId: string;
