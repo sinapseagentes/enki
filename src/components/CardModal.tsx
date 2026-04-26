@@ -87,7 +87,7 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
         boardId: card.boardId,
         userId: user.uid,
         userName: user.displayName || "Usuário",
-        userPhoto: user.photoURL || undefined,
+        userPhoto: user.photoURL || null,
         text: newComment.trim(),
       });
 
