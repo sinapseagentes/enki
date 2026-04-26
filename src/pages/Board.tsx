@@ -10,6 +10,16 @@ import { CardModal } from "../components/CardModal";
 import { InviteModal } from "../components/InviteModal";
 import type { List, Card, Board } from "../types";
 
+const COLORS = [
+  "#f87171", // red
+  "#fb923c", // orange
+  "#facc15", // yellow
+  "#4ade80", // green
+  "#60a5fa", // blue
+  "#c084fc", // purple
+  "#a8a29e", // gray
+];
+
 export const BoardPage = () => {
   const { id: boardId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -22,6 +32,7 @@ export const BoardPage = () => {
   const [newListTitle, setNewListTitle] = useState("");
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isInviting, setIsInviting] = useState(false);
+  const [filterColor, setFilterColor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!boardId) return;
@@ -168,7 +179,7 @@ export const BoardPage = () => {
 
   return (
     <div className="h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex flex-col">
-      <nav className="bg-black/20 backdrop-blur-sm px-4 py-3 flex justify-between items-center text-white shrink-0">
+      <nav className="bg-black/20 backdrop-blur-sm px-4 py-3 flex justify-between items-center text-white shrink-0 border-b border-white/10">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate("/")}
@@ -201,15 +212,41 @@ export const BoardPage = () => {
                     {member.displayName?.charAt(0) || "?"}
                   </div>
                 )}
-                {/* Tooltip on hover */}
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                {/* Tooltip on hover - positioned below the avatar */}
+                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-lg">
                   {member.displayName}
                 </span>
               </div>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-4">
+          {/* Color Filters */}
+          <div className="hidden md:flex items-center gap-1.5 bg-black/10 p-1 rounded-lg">
+            {COLORS.map(color => (
+              <button
+                key={color}
+                onClick={() => setFilterColor(filterColor === color ? null : color)}
+                className={`w-5 h-5 rounded-full border-2 transition-all ${
+                  filterColor === color 
+                    ? "border-white scale-110 shadow-md ring-2 ring-blue-400" 
+                    : "border-transparent opacity-60 hover:opacity-100"
+                }`}
+                style={{ backgroundColor: color }}
+                title="Filtrar por esta cor"
+              />
+            ))}
+            {filterColor && (
+              <button 
+                onClick={() => setFilterColor(null)}
+                className="text-[10px] text-blue-200 hover:text-white ml-1 px-1 underline"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+
           <button
             onClick={() => setIsInviting(true)}
             className="text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded font-medium transition-colors flex items-center gap-2"
@@ -230,7 +267,10 @@ export const BoardPage = () => {
                 className="flex gap-4 items-start h-full"
               >
                 {lists.map((list, index) => {
-                  const listCards = cards.filter(c => c.listId === list.id).sort((a,b) => a.order - b.order);
+                  const listCards = cards
+                    .filter(c => c.listId === list.id)
+                    .filter(c => !filterColor || c.colorLabel === filterColor)
+                    .sort((a,b) => a.order - b.order);
                   return (
                     <ListContainer 
                       key={list.id} 
