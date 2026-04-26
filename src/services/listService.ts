@@ -30,10 +30,7 @@ export const subscribeToLists = (
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const lists: List[] = [];
     snapshot.forEach((doc) => {
-      const data = doc.data();
-      if (!data.archived) {
-        lists.push({ id: doc.id, ...data } as List);
-      }
+      lists.push({ id: doc.id, ...doc.data() } as List);
     });
     callback(lists);
   }, (error) => {
@@ -54,6 +51,11 @@ export const updateListTitle = async (listId: string, title: string) => {
 export const archiveList = async (listId: string) => {
   const listRef = doc(db, LISTS_COLLECTION, listId);
   await updateDoc(listRef, { archived: true });
+};
+
+export const restoreList = async (listId: string) => {
+  const listRef = doc(db, LISTS_COLLECTION, listId);
+  await updateDoc(listRef, { archived: false });
 };
 
 export const deleteList = async (listId: string) => {

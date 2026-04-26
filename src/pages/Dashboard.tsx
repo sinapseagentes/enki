@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { createBoard, subscribeToBoards, archiveBoard, updateBoardTitle } from "../services/boardService";
+import { createBoard, subscribeToBoards, archiveBoard, restoreBoard, updateBoardTitle } from "../services/boardService";
 import { subscribeToLists } from "../services/listService";
 import type { Board, List } from "../types";
 
-const BoardCard = ({ board, onArchive }: { board: Board, onArchive: (e: React.MouseEvent, id: string) => void }) => {
+const BoardCard = ({ board, onArchive, onRestore }: { 
+  board: Board, 
+  onArchive: (e: React.MouseEvent, id: string) => void,
+  onRestore: (e: React.MouseEvent, id: string) => void 
+}) => {
   const navigate = useNavigate();
   const [lists, setLists] = useState<List[]>([]);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -56,7 +60,7 @@ const BoardCard = ({ board, onArchive }: { board: Board, onArchive: (e: React.Mo
   return (
     <div 
       onClick={() => !isEditingTitle && navigate(`/board/${board.id}`)}
-      className="bg-blue-600 hover:bg-blue-700 rounded-lg h-32 p-4 cursor-pointer transition-colors shadow-sm group relative flex flex-col justify-between overflow-hidden"
+      className={`${board.archived ? "bg-gray-400 grayscale opacity-75" : "bg-blue-600 hover:bg-blue-700"} rounded-lg h-32 p-4 cursor-pointer transition-all shadow-sm group relative flex flex-col justify-between overflow-hidden`}
     >
       <div>
         {isEditingTitle ? (
@@ -72,16 +76,17 @@ const BoardCard = ({ board, onArchive }: { board: Board, onArchive: (e: React.Mo
         ) : (
           <div className="flex items-start gap-1 pr-8">
             <h3 className="text-white font-bold text-lg truncate flex-1">{board.title}</h3>
-            {/* Pencil icon — triggers rename, visible on hover */}
-            <button
-              onClick={startEditTitle}
-              className="shrink-0 p-1 text-blue-200 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-blue-800/50 rounded transition-all mt-0.5"
-              title="Renomear quadro"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-            </button>
+            {!board.archived && (
+              <button
+                onClick={startEditTitle}
+                className="shrink-0 p-1 text-blue-200 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-blue-800/50 rounded transition-all mt-0.5"
+                title="Renomear quadro"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
         {lists.length > 0 && (
@@ -91,21 +96,32 @@ const BoardCard = ({ board, onArchive }: { board: Board, onArchive: (e: React.Mo
                 {list.title}
               </span>
             ))}
-            {lists.length > 3 && <span className="text-xs text-white">+{lists.length - 3}</span>}
           </div>
         )}
-        {lists.length === 0 && <span className="text-xs text-blue-200 mt-2 block">Vazio (Nenhuma lista)</span>}
+        {board.archived && <span className="text-[10px] bg-black/20 text-white px-2 py-0.5 rounded mt-2 inline-block">Arquivado</span>}
       </div>
 
-      {/* Archive button */}
+      {/* Action buttons */}
       {!isEditingTitle && (
-        <button
-          onClick={(e) => onArchive(e, board.id!)}
-          className="absolute top-3 right-3 p-1.5 text-blue-200 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-blue-800/50 rounded transition-all"
-          title="Arquivar quadro"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-        </button>
+        <div className="absolute top-3 right-3 flex gap-1">
+          {board.archived ? (
+            <button
+              onClick={(e) => onRestore(e, board.id!)}
+              className="p-1.5 text-white bg-green-600 hover:bg-green-700 rounded transition-all shadow-sm"
+              title="Restaurar quadro"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            </button>
+          ) : (
+            <button
+              onClick={(e) => onArchive(e, board.id!)}
+              className="p-1.5 text-blue-200 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-blue-800/50 rounded transition-all"
+              title="Arquivar quadro"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -117,6 +133,7 @@ export const Dashboard = () => {
   const [boards, setBoards] = useState<Board[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newBoardTitle, setNewBoardTitle] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -142,7 +159,7 @@ export const Dashboard = () => {
 
   const handleArchiveBoard = async (e: React.MouseEvent, boardId: string) => {
     e.stopPropagation();
-    if (confirm("Tem certeza que deseja arquivar este quadro? Ele não aparecerá mais na sua lista.")) {
+    if (confirm("Tem certeza que deseja arquivar este quadro? Ele não aparecerá mais na sua lista padrão.")) {
       try {
         await archiveBoard(boardId);
       } catch (error) {
@@ -150,6 +167,17 @@ export const Dashboard = () => {
       }
     }
   };
+
+  const handleRestoreBoard = async (e: React.MouseEvent, boardId: string) => {
+    e.stopPropagation();
+    try {
+      await restoreBoard(boardId);
+    } catch (error) {
+      console.error("Erro ao restaurar quadro:", error);
+    }
+  };
+
+  const visibleBoards = boards.filter(b => showArchived || !b.archived);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -175,11 +203,22 @@ export const Dashboard = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Seus Quadros</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Seus Quadros</h1>
+          <button 
+            onClick={() => setShowArchived(!showArchived)}
+            className={`text-sm px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
+              showArchived ? "bg-blue-100 text-blue-700 border-2 border-blue-200" : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-100"
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+            {showArchived ? "Ocultar Arquivados" : "Mostrar Arquivados"}
+          </button>
+        </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {/* Create Board Card */}
-          {!isCreating ? (
+          {!isCreating && !showArchived && (
             <div 
               onClick={() => setIsCreating(true)}
               className="bg-gray-200/50 hover:bg-gray-200 rounded-lg h-32 flex items-center justify-center cursor-pointer transition-colors border-2 border-dashed border-gray-300"
@@ -189,7 +228,8 @@ export const Dashboard = () => {
                 Criar novo quadro
               </span>
             </div>
-          ) : (
+          )}
+          {isCreating && !showArchived && (
             <div className="bg-white p-4 rounded-lg shadow-md h-32 border border-gray-200 flex flex-col justify-between">
               <form onSubmit={handleCreateBoard} className="flex flex-col h-full justify-between">
                 <input 
@@ -221,8 +261,8 @@ export const Dashboard = () => {
           )}
 
           {/* List existing boards */}
-          {boards.map(board => (
-            <BoardCard key={board.id} board={board} onArchive={handleArchiveBoard} />
+          {visibleBoards.map(board => (
+            <BoardCard key={board.id} board={board} onArchive={handleArchiveBoard} onRestore={handleRestoreBoard} />
           ))}
         </div>
       </main>

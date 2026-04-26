@@ -32,10 +32,7 @@ export const subscribeToBoards = (
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const boards: Board[] = [];
     snapshot.forEach((doc) => {
-      const data = doc.data();
-      if (!data.archived) {
-        boards.push({ id: doc.id, ...data } as Board);
-      }
+      boards.push({ id: doc.id, ...doc.data() } as Board);
     });
     callback(boards);
   }, (error) => {
@@ -46,6 +43,11 @@ export const subscribeToBoards = (
 export const archiveBoard = async (boardId: string) => {
   const boardRef = doc(db, BOARDS_COLLECTION, boardId);
   await updateDoc(boardRef, { archived: true });
+};
+
+export const restoreBoard = async (boardId: string) => {
+  const boardRef = doc(db, BOARDS_COLLECTION, boardId);
+  await updateDoc(boardRef, { archived: false });
 };
 
 export const deleteBoard = async (boardId: string) => {

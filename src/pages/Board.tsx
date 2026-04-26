@@ -33,6 +33,7 @@ export const BoardPage = () => {
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isInviting, setIsInviting] = useState(false);
   const [filterColor, setFilterColor] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     if (!boardId) return;
@@ -222,6 +223,17 @@ export const BoardPage = () => {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Show Archived Toggle */}
+          <button 
+            onClick={() => setShowArchived(!showArchived)}
+            className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded border transition-all ${
+              showArchived ? "bg-blue-100 text-blue-700 border-blue-200 font-bold" : "bg-white/10 text-white/70 border-white/10 hover:bg-white/20"
+            }`}
+            title={showArchived ? "Ocultar itens arquivados" : "Mostrar itens arquivados"}
+          >
+            {showArchived ? "Arquivados: ON" : "Arquivados"}
+          </button>
+
           {/* Color Filters */}
           <div className="hidden md:flex items-center gap-1.5 bg-black/10 p-1 rounded-lg">
             {COLORS.map(color => (
@@ -266,12 +278,15 @@ export const BoardPage = () => {
                 ref={provided.innerRef}
                 className="flex gap-4 items-start h-full"
               >
-                {lists.map((list, index) => {
-                  const listCards = cards
-                    .filter(c => c.listId === list.id)
-                    .filter(c => !filterColor || c.colorLabel === filterColor)
-                    .sort((a,b) => a.order - b.order);
-                  return (
+                {lists
+                  .filter(l => showArchived || !l.archived)
+                  .map((list, index) => {
+                    const listCards = cards
+                      .filter(c => c.listId === list.id)
+                      .filter(c => showArchived || !c.archived)
+                      .filter(c => !filterColor || c.colorLabel === filterColor)
+                      .sort((a,b) => a.order - b.order);
+                    return (
                     <ListContainer 
                       key={list.id} 
                       list={list} 

@@ -1,6 +1,6 @@
 import { Draggable } from "@hello-pangea/dnd";
 import type { Card } from "../types";
-import { archiveCard } from "../services/cardService";
+import { archiveCard, restoreCard } from "../services/cardService";
 
 interface CardItemProps {
   card: Card;
@@ -25,6 +25,15 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
     }
   };
 
+  const handleRestore = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await restoreCard(card.id!);
+    } catch (error) {
+      console.error("Erro ao restaurar cartão:", error);
+    }
+  };
+
   const isOverdue = card.dueDate ? card.dueDate < Date.now() : false;
 
   return (
@@ -35,9 +44,9 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className={`group bg-white rounded shadow-sm border border-gray-200 mb-2 cursor-grab active:cursor-grabbing hover:bg-gray-50 transition-all relative overflow-hidden ${
-            snapshot.isDragging ? "shadow-lg rotate-2 scale-105" : ""
-          }`}
+          className={`group rounded shadow-sm border mb-2 cursor-grab active:cursor-grabbing transition-all relative overflow-hidden ${
+            card.archived ? "bg-gray-200 border-gray-300 opacity-75 grayscale" : "bg-white border-gray-200 hover:bg-gray-50"
+          } ${snapshot.isDragging ? "shadow-lg rotate-2 scale-105" : ""}`}
         >
           {card.colorLabel && (
             <div className="h-2 w-full" style={{ backgroundColor: card.colorLabel }} />
@@ -63,13 +72,25 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
               </div>
             )}
 
-            <button
-              onClick={handleArchive}
-              className="absolute top-2 right-2 p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
-              title="Arquivar cartão"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-            </button>
+            <div className="absolute top-2 right-2 flex gap-1">
+              {card.archived && (
+                <button
+                  onClick={handleRestore}
+                  className="p-1 text-green-600 hover:bg-green-100 rounded transition-all"
+                  title="Restaurar cartão"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                </button>
+              )}
+              <button
+                onClick={handleArchive}
+                className={`p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-blue-50 rounded transition-all ${card.archived ? "opacity-100 text-blue-600" : ""}`}
+                title={card.archived ? "Cartão Arquivado" : "Arquivar cartão"}
+                disabled={card.archived}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+              </button>
+            </div>
           </div>
         </div>
       )}

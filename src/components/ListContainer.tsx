@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { CardItem } from "./CardItem";
 import type { List, Card } from "../types";
-import { archiveList, updateListTitle } from "../services/listService";
+import { archiveList, restoreList, updateListTitle } from "../services/listService";
 
 interface ListContainerProps {
   list: List;
@@ -34,6 +34,14 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
       } catch (error) {
         console.error("Erro ao arquivar lista:", error);
       }
+    }
+  };
+
+  const handleRestoreList = async () => {
+    try {
+      await restoreList(list.id!);
+    } catch (error) {
+      console.error("Erro ao restaurar lista:", error);
     }
   };
 
@@ -72,7 +80,7 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
           {/* List Header (Drag Handle) */}
           <div
             {...(!isEditingTitle ? provided.dragHandleProps : {})}
-            className="p-3 font-semibold text-gray-800 flex justify-between items-center group"
+            className={`p-3 font-semibold text-gray-800 flex justify-between items-center group rounded-t-lg ${list.archived ? "bg-gray-300" : ""}`}
           >
             {isEditingTitle ? (
               <input
@@ -94,13 +102,25 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
               </h2>
             )}
             {!isEditingTitle && (
-              <button
-                onClick={handleArchiveList}
-                className="ml-1 p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-gray-200 rounded transition-all shrink-0"
-                title="Arquivar lista"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-              </button>
+              <div className="flex items-center gap-1">
+                {list.archived && (
+                  <button
+                    onClick={handleRestoreList}
+                    className="p-1 text-green-600 hover:bg-green-100 rounded transition-all shrink-0"
+                    title="Restaurar lista"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  </button>
+                )}
+                <button
+                  onClick={handleArchiveList}
+                  className={`ml-1 p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-gray-200 rounded transition-all shrink-0 ${list.archived ? "opacity-100 text-blue-600" : ""}`}
+                  title={list.archived ? "Lista Arquivada" : "Arquivar lista"}
+                  disabled={list.archived}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                </button>
+              </div>
             )}
           </div>
 
