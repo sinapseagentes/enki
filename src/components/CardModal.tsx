@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import type { Card, ChecklistItem } from "../types";
+import type { Card, ChecklistItem, Comment } from "../types";
 import { updateCard } from "../services/cardService";
+import { addComment, subscribeToComments } from "../services/commentService";
+import { logActivity } from "../services/activityService";
+import { useAuth } from "../contexts/AuthContext";
 
 interface CardModalProps {
   card: Card;
@@ -18,6 +21,7 @@ const COLORS = [
 ];
 
 export const CardModal = ({ card, onClose }: CardModalProps) => {
+  const { user } = useAuth();
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
   const [colorLabel, setColorLabel] = useState(card.colorLabel || "");
@@ -26,6 +30,8 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
   );
   const [checklists, setChecklists] = useState<ChecklistItem[]>(card.checklists || []);
   const [newItemTitle, setNewItemTitle] = useState("");
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   // Close on Escape key
@@ -36,6 +42,15 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  // Subscribe to comments
+  useEffect(() => {
+    if (!card.id) return;
+    const unsubscribe = subscribeToComments(card.id, (fetched) => {
+      setComments(fetched);
+    });
+    return () => unsubscribe();
+  }, [card.id]);
 
   const handleSave = async () => {
     if (!title.trim()) return;
@@ -53,6 +68,37 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
       console.error("Erro ao salvar cartão:", error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !user || !card.id) return;
+
+    try {
+      await addComment({
+        cardId: card.id,
+        boardId: card.boardId,
+        userId: user.uid,
+        userName: user.displayName || "Usuário",
+        userPhoto: user.photoURL || undefined,
+        text: newComment.trim(),
+      });
+
+      await logActivity({
+        boardId: card.boardId,
+        userId: user.uid,
+        userName: user.displayName || "Usuário",
+        type: "comment_added",
+        details: { 
+          cardTitle: card.title,
+          text: newComment.trim().substring(0, 50) + (newComment.length > 50 ? "..." : "")
+        }
+      });
+
+      setNewComment("");
+    } catch (error) {
+      console.error("Erro ao adicionar comentário:", error);
     }
   };
 
@@ -80,6 +126,14 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
 
   const completedCount = checklists.filter(i => i.completed).length;
   const progressPercent = checklists.length > 0 ? Math.round((completedCount / checklists.length) * 100) : 0;
+
+  const formatCommentDate = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    if (diff < 60000) return "agora mesmo";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} min atrás`;
+    return new Date(timestamp).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -193,6 +247,55 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
                     Adicionar
                   </button>
                 </form>
+              </div>
+
+              {/* Comments Section */}
+              <div className="pt-4 border-t border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                  Comentários
+                </h3>
+
+                <form onSubmit={handleAddComment} className="flex gap-3 mb-6">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-600 font-bold text-xs uppercase overflow-hidden">
+                    {user?.photoURL ? <img src={user.photoURL} alt="" /> : user?.displayName?.charAt(0) || "?"}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Escreva um comentário..."
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none min-h-[80px]"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newComment.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-2 rounded-md font-semibold disabled:opacity-50 transition-colors"
+                    >
+                      Comentar
+                    </button>
+                  </div>
+                </form>
+
+                <div className="space-y-4">
+                  {comments.map((comment) => (
+                    <div key={comment.id} className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-600 font-bold text-xs uppercase overflow-hidden">
+                        {comment.userPhoto ? <img src={comment.userPhoto} alt="" /> : comment.userName.charAt(0)}
+                      </div>
+                      <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                        <div className="flex justify-between items-baseline mb-1">
+                          <span className="font-bold text-sm text-gray-800">{comment.userName}</span>
+                          <span className="text-[10px] text-gray-400">{formatCommentDate(comment.createdAt)}</span>
+                        </div>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {comments.length === 0 && (
+                    <p className="text-center text-gray-400 text-sm italic py-4">Sem comentários ainda.</p>
+                  )}
+                </div>
               </div>
             </div>
 

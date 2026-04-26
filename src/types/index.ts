@@ -46,6 +46,17 @@ export interface Activity {
   createdAt: number;
 }
 
+export interface Comment {
+  id?: string;
+  cardId: string;
+  boardId: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  text: string;
+  createdAt: number;
+}
+
 export interface Card {
   id?: string;
   listId: string;
