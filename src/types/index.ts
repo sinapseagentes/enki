@@ -28,6 +28,7 @@ export interface Card {
   boardId: string;
   title: string;
   description?: string;
+  colorLabel?: string; // Hex color code
   order: number;
   createdAt: number;
 }

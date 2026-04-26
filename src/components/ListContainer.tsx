@@ -9,9 +9,10 @@ interface ListContainerProps {
   cards: Card[];
   index: number;
   onAddCard: (listId: string, title: string) => void;
+  onCardClick: (card: Card) => void;
 }
 
-export const ListContainer = ({ list, cards, index, onAddCard }: ListContainerProps) => {
+export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: ListContainerProps) => {
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState("");
 
@@ -69,7 +70,7 @@ export const ListContainer = ({ list, cards, index, onAddCard }: ListContainerPr
                 }`}
               >
                 {cards.map((card, cardIndex) => (
-                  <CardItem key={card.id} card={card} index={cardIndex} />
+                  <CardItem key={card.id} card={card} index={cardIndex} onClick={() => onCardClick(card)} />
                 ))}
                 {provided.placeholder}
               </div>

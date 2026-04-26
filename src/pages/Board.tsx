@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { subscribeToLists, createList, updateListOrder } from "../services/listService";
 import { subscribeToCards, createCard, updateCard } from "../services/cardService";
 import { ListContainer } from "../components/ListContainer";
+import { CardModal } from "../components/CardModal";
 import type { List, Card } from "../types";
 
 export const BoardPage = () => {
@@ -17,6 +18,7 @@ export const BoardPage = () => {
   const [cards, setCards] = useState<Card[]>([]);
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState("");
+  const [activeCard, setActiveCard] = useState<Card | null>(null);
 
   useEffect(() => {
     if (!boardId) return;
@@ -195,6 +197,7 @@ export const BoardPage = () => {
                       cards={listCards} 
                       index={index} 
                       onAddCard={handleAddCard}
+                      onCardClick={setActiveCard}
                     />
                   );
                 })}
@@ -247,6 +250,14 @@ export const BoardPage = () => {
           </Droppable>
         </DragDropContext>
       </main>
+
+      {/* Card Detail Modal */}
+      {activeCard && (
+        <CardModal 
+          card={activeCard} 
+          onClose={() => setActiveCard(null)} 
+        />
+      )}
     </div>
   );
 };
