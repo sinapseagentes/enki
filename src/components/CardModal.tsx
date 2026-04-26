@@ -5,6 +5,7 @@ import { addComment, subscribeToComments } from "../services/commentService";
 import { uploadFile } from "../services/storageService";
 import { logActivity } from "../services/activityService";
 import { useAuth } from "../contexts/AuthContext";
+import { useNotification } from "../contexts/NotificationContext";
 
 interface CardModalProps {
   card: Card;
@@ -23,6 +24,7 @@ const COLORS = [
 
 export const CardModal = ({ card, onClose }: CardModalProps) => {
   const { user } = useAuth();
+  const { showNotification } = useNotification();
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
   const [colorLabel, setColorLabel] = useState(card.colorLabel || "");
@@ -69,9 +71,11 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
         attachments,
         coverUrl,
       });
+      showNotification("Cartão atualizado com sucesso!");
       onClose();
     } catch (error) {
       console.error("Erro ao salvar cartão:", error);
+      showNotification("Falha ao salvar as alterações.", "error");
     } finally {
       setIsSaving(false);
     }
@@ -138,9 +142,11 @@ export const CardModal = ({ card, onClose }: CardModalProps) => {
         type: "board_updated", // Using board_updated as a generic card change for now
         details: { cardTitle: card.title, text: `anexou ${file.name}` }
       });
+
+      showNotification(`Arquivo "${file.name}" anexado.`);
     } catch (error) {
       console.error("Erro no upload:", error);
-      alert("Falha ao enviar arquivo. Verifique se o Emulador de Storage está rodando.");
+      showNotification("Falha ao enviar arquivo.", "error");
     } finally {
       setIsUploading(false);
     }

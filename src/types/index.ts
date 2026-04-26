@@ -52,7 +52,7 @@ export interface Comment {
   boardId: string;
   userId: string;
   userName: string;
-  userPhoto?: string;
+  userPhoto?: string | null;
   text: string;
   createdAt: number;
 }

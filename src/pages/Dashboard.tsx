@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useNotification } from "../contexts/NotificationContext";
 import { createBoard, subscribeToBoards, archiveBoard, restoreBoard, updateBoardTitle } from "../services/boardService";
 import { subscribeToLists } from "../services/listService";
 import type { Board, List } from "../types";
@@ -129,6 +130,7 @@ const BoardCard = ({ board, onArchive, onRestore }: {
 
 export const Dashboard = () => {
   const { user, logout } = useAuth();
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
   const [boards, setBoards] = useState<Board[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -151,9 +153,11 @@ export const Dashboard = () => {
       const boardId = await createBoard(newBoardTitle, user.uid);
       setIsCreating(false);
       setNewBoardTitle("");
+      showNotification(`Quadro "${newBoardTitle}" criado!`);
       navigate(`/board/${boardId}`);
     } catch (error) {
       console.error("Error creating board:", error);
+      showNotification("Falha ao criar quadro.", "error");
     }
   };
 
@@ -162,6 +166,7 @@ export const Dashboard = () => {
     if (confirm("Tem certeza que deseja arquivar este quadro? Ele não aparecerá mais na sua lista padrão.")) {
       try {
         await archiveBoard(boardId);
+        showNotification("Quadro arquivado.");
       } catch (error) {
         console.error("Erro ao arquivar quadro:", error);
       }
@@ -172,6 +177,7 @@ export const Dashboard = () => {
     e.stopPropagation();
     try {
       await restoreBoard(boardId);
+      showNotification("Quadro restaurado!");
     } catch (error) {
       console.error("Erro ao restaurar quadro:", error);
     }
