@@ -18,13 +18,25 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
+      // Registrar Service Worker APENAS em produção (não em localhost)
+      const isLocalhost = Boolean(
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '[::1]' ||
+        window.location.hostname.match(/^127(\.\d{1,3}){3}$/)
+      );
+
+      if ('serviceWorker' in navigator && !isLocalhost) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').then(() => {
-            console.log('[Ollert] Service Worker registrado com sucesso.');
+            console.log('[Ollert] Service Worker registrado.');
           }).catch((err) => {
             console.error('[Ollert] Falha ao registrar Service Worker:', err);
           });
+        });
+      } else if (isLocalhost && 'serviceWorker' in navigator) {
+        // Em desenvolvimento: desregistrar qualquer SW antigo
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((reg) => reg.unregister());
         });
       }
     </script>
