@@ -2,21 +2,22 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
-import { useAuth } from "../contexts/AuthContext";
 import { subscribeToLists, createList, updateListOrder } from "../services/listService";
 import { subscribeToCards, createCard, updateCard } from "../services/cardService";
+import { subscribeToBoard, getMembersProfile } from "../services/boardService";
 import { ListContainer } from "../components/ListContainer";
 import { CardModal } from "../components/CardModal";
 import { InviteModal } from "../components/InviteModal";
-import type { List, Card } from "../types";
+import type { List, Card, Board } from "../types";
 
 export const BoardPage = () => {
   const { id: boardId } = useParams<{ id: string }>();
-  const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [board, setBoard] = useState<Board | null>(null);
   const [lists, setLists] = useState<List[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState("");
   const [activeCard, setActiveCard] = useState<Card | null>(null);
@@ -24,6 +25,10 @@ export const BoardPage = () => {
 
   useEffect(() => {
     if (!boardId) return;
+
+    const unsubscribeBoard = subscribeToBoard(boardId, (fetchedBoard) => {
+      setBoard(fetchedBoard);
+    });
 
     const unsubscribeLists = subscribeToLists(boardId, (fetchedLists) => {
       setLists(fetchedLists);
@@ -34,10 +39,20 @@ export const BoardPage = () => {
     });
 
     return () => {
+      unsubscribeBoard();
       unsubscribeLists();
       unsubscribeCards();
     };
   }, [boardId]);
+
+  // Fetch member profiles when board members list changes
+  useEffect(() => {
+    if (board?.members && board.members.length > 0) {
+      getMembersProfile(board.members).then(profiles => {
+        setMembers(profiles);
+      });
+    }
+  }, [board?.members]);
 
   const handleAddList = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,7 +177,37 @@ export const BoardPage = () => {
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </button>
-          <span className="font-bold text-lg">Quadro</span>
+          <h1 className="font-bold text-lg hidden sm:block">
+            {board?.title || "Carregando..."}
+          </h1>
+          
+          {/* Members Avatars List */}
+          <div className="flex -space-x-2 ml-2">
+            {members.map((member, i) => (
+              <div 
+                key={member.uid} 
+                className="relative group"
+                style={{ zIndex: members.length - i }}
+              >
+                {member.photoURL ? (
+                  <img 
+                    src={member.photoURL} 
+                    alt={member.displayName}
+                    className="w-8 h-8 rounded-full border-2 border-blue-600 object-cover bg-white"
+                    title={member.displayName}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full border-2 border-blue-600 bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold uppercase">
+                    {member.displayName?.charAt(0) || "?"}
+                  </div>
+                )}
+                {/* Tooltip on hover */}
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  {member.displayName}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -172,9 +217,6 @@ export const BoardPage = () => {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
             Compartilhar
           </button>
-          <span className="text-sm bg-white/20 px-3 py-1.5 rounded font-medium ml-2">
-            {user?.displayName}
-          </span>
         </div>
       </nav>
       

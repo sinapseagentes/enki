@@ -50,6 +50,22 @@ export const updateBoardTitle = async (boardId: string, title: string) => {
   await updateDoc(boardRef, { title, updatedAt: Date.now() });
 };
 
+export const subscribeToBoard = (boardId: string, callback: (board: Board) => void) => {
+  const boardRef = doc(db, BOARDS_COLLECTION, boardId);
+  return onSnapshot(boardRef, (snapshot) => {
+    if (snapshot.exists()) {
+      callback({ id: snapshot.id, ...snapshot.data() } as Board);
+    }
+  });
+};
+
+export const getMembersProfile = async (uids: string[]) => {
+  if (uids.length === 0) return [];
+  const q = query(collection(db, USERS_COLLECTION), where("uid", "in", uids));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => doc.data());
+};
+
 export const inviteUserToBoard = async (boardId: string, email: string) => {
   // Find user by email
   const q = query(collection(db, USERS_COLLECTION), where("email", "==", email));
