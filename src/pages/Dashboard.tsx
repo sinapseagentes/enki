@@ -10,7 +10,7 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
   const [lists, setLists] = useState<List[]>([]);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(board.title);
-  const titleInputRef = useRef<HTMLInputElement>(null);
+  const isSavingRef = useRef(false);
 
   useEffect(() => {
     if (!board.id) return;
@@ -20,29 +20,38 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
     return () => unsubscribe();
   }, [board.id]);
 
-  // Sync title draft when board prop changes (real-time)
-  useEffect(() => { setTitleDraft(board.title); }, [board.title]);
+  // Sync title only when NOT editing (avoid overwriting user input)
+  useEffect(() => {
+    if (!isEditingTitle) setTitleDraft(board.title);
+  }, [board.title, isEditingTitle]);
 
   const startEditTitle = (e: React.MouseEvent) => {
     e.stopPropagation();
     setTitleDraft(board.title);
     setIsEditingTitle(true);
-    setTimeout(() => titleInputRef.current?.select(), 0);
+    isSavingRef.current = false;
   };
 
-  const saveTitle = async () => {
+  const saveTitle = async (draft: string) => {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
     setIsEditingTitle(false);
-    const trimmed = titleDraft.trim();
-    if (!trimmed || trimmed === board.title) return;
+    const trimmed = draft.trim();
+    if (!trimmed || trimmed === board.title) {
+      isSavingRef.current = false;
+      return;
+    }
     try {
       await updateBoardTitle(board.id!, trimmed);
     } catch (error) {
       console.error("Erro ao renomear quadro:", error);
+    } finally {
+      isSavingRef.current = false;
     }
   };
 
-  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") saveTitle();
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") { e.preventDefault(); saveTitle(titleDraft); }
     if (e.key === "Escape") { setIsEditingTitle(false); setTitleDraft(board.title); }
   };
 
@@ -54,12 +63,11 @@ const BoardCard = ({ board, onDelete }: { board: Board, onDelete: (e: React.Mous
       <div>
         {isEditingTitle ? (
           <input
-            ref={titleInputRef}
             autoFocus
             value={titleDraft}
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => setTitleDraft(e.target.value)}
-            onBlur={saveTitle}
+            onBlur={() => saveTitle(titleDraft)}
             onKeyDown={handleTitleKeyDown}
             className="text-lg font-bold bg-blue-500 text-white border border-blue-300 rounded px-2 py-0.5 w-full focus:outline-none focus:ring-2 focus:ring-white"
           />
