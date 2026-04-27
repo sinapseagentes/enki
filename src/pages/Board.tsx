@@ -11,8 +11,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { ListContainer } from "../components/ListContainer";
 import { CardModal } from "../components/CardModal";
 import { InviteModal } from "../components/InviteModal";
-import { ActivityLog } from "../components/ActivityLog";
-import { NotificationBell } from "../components/NotificationBell";
+import { CommandCenter } from "../components/CommandCenter";
 import { COLORS, GRADIENTS } from "../constants/design";
 import type { List, Card, Board } from "../types";
 
@@ -30,7 +29,8 @@ export const BoardPage = () => {
   const [newListTitle, setNewListTitle] = useState("");
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isInviting, setIsInviting] = useState(false);
-  const [showActivities, setShowActivities] = useState(false);
+  const [showCommandCenter, setShowCommandCenter] = useState(false);
+  const [commandCenterTab, setCommandCenterTab] = useState<"activities" | "notifications">("activities");
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLabel, setFilterLabel] = useState<string | null>(null);
@@ -393,7 +393,7 @@ export const BoardPage = () => {
         <div className="flex items-center gap-3">
           <button 
             onClick={toggleTheme}
-            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all active-shrink"
             title={theme === "light" ? "Mudar para Dark Mode" : "Mudar para Light Mode"}
           >
             {theme === "light" ? (
@@ -403,7 +403,21 @@ export const BoardPage = () => {
             )}
           </button>
           
-          <NotificationBell />
+          <button 
+            onClick={() => { setCommandCenterTab("notifications"); setShowCommandCenter(true); }}
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all relative active-shrink"
+            title="Notificações"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+          </button>
+
+          <button 
+            onClick={() => { setCommandCenterTab("activities"); setShowCommandCenter(true); }}
+            className={`p-2 rounded-full transition-all active-shrink ${showCommandCenter && commandCenterTab === 'activities' ? "bg-white text-blue-600" : "text-white/80 hover:text-white hover:bg-white/10"}`}
+            title="Histórico de Atividades"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </button>
 
           <div className="relative">
             <button 
@@ -456,13 +470,13 @@ export const BoardPage = () => {
             )}
           </div>
 
-          <button 
-            onClick={() => setShowActivities(!showActivities)}
-            className={`p-2 rounded-full transition-all ${showActivities ? "bg-white text-blue-600" : "text-white/80 hover:text-white hover:bg-white/10"}`}
-            title="Histórico de Atividades"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          </button>
+            <button 
+              onClick={() => { setCommandCenterTab("activities"); setShowCommandCenter(true); }}
+              className={`p-2 rounded-full transition-all active-shrink ${showCommandCenter && commandCenterTab === 'activities' ? "bg-white text-blue-600" : "text-white/80 hover:text-white hover:bg-white/10"}`}
+              title="Histórico de Atividades"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </button>
           <button 
             onClick={() => setIsInviting(true)}
             className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-1.5 rounded-md flex items-center gap-2 transition-all"
@@ -557,10 +571,11 @@ export const BoardPage = () => {
         />
       )}
 
-      {showActivities && boardId && (
-        <ActivityLog 
+      {showCommandCenter && boardId && (
+        <CommandCenter 
           boardId={boardId} 
-          onClose={() => setShowActivities(false)} 
+          initialTab={commandCenterTab}
+          onClose={() => setShowCommandCenter(false)} 
         />
       )}
     </div>

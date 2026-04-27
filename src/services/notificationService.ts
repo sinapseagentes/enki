@@ -47,7 +47,9 @@ export const subscribeToNotifications = (userId: string, callback: (notification
 /**
  * Marca uma notificação como lida
  */
-export const markAsRead = async (notificationId: string) => {
+export const markNotificationAsRead = async (notificationId: string) => {
   const docRef = doc(db, "notifications", notificationId);
   await updateDoc(docRef, { read: true });
 };
+
+export const markAsRead = markNotificationAsRead;
