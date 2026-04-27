@@ -13,8 +13,10 @@
   - `[x]` Implementar **"Modo Escriba Sumeriano"** (Board→Tábua, Card→Selo, List→Coluna).
   - `[x]` Refinar Top Bar removendo redundâncias e ícones duplicados.
   - `[x]` Integrar persistência no `localStorage` via `ThemeContext`.
+  - `[x]` **Firula: "Tema de Argila"** (Visual imersivo ao ativar o Modo Escriba).
 
 ## 🟡 Em Andamento / Próximos Passos
+
 - `[ ]` **V10.1: Refinamento de PWA e Performance**
   - `[ ]` Melhorar cache de imagens e transições de página.
 

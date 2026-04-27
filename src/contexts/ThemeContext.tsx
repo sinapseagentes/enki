@@ -28,6 +28,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [theme]);
 
   useEffect(() => {
+    document.body.setAttribute("data-scribe-mode", String(scribeMode));
     localStorage.setItem("@Enki:scribeMode", String(scribeMode));
   }, [scribeMode]);
 

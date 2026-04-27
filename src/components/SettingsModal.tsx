@@ -64,7 +64,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                   </div>
                   <div>
                     <p className="font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">Modo Escriba Sumeriano</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Ativar nomenclatura histórica (Antigravity)</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Ativar nomenclatura e visual de Argila (Antigravity)</p>
                   </div>
                 </div>
                 <button 

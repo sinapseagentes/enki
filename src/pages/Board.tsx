@@ -274,10 +274,18 @@ export const BoardPage = () => {
 
   return (
     <div 
-      className={`h-screen flex flex-col transition-all duration-500 ${theme === 'dark' ? 'bg-theme-page' : (isGradient ? `bg-gradient-to-br ${currentBg}` : '')}`}
-      style={!isGradient && theme !== 'dark' ? { backgroundColor: currentBg } : {}}
+      className={`h-screen flex flex-col transition-all duration-500 ${
+        scribeMode 
+          ? 'bg-theme-page text-theme-main' 
+          : (theme === 'dark' ? 'bg-theme-page' : (isGradient ? `bg-gradient-to-br ${currentBg}` : ''))
+      }`}
+      style={!scribeMode && !isGradient && theme !== 'dark' ? { backgroundColor: currentBg } : {}}
     >
-      <nav className={`relative z-50 ${theme === 'dark' ? 'bg-slate-900/50' : 'bg-black/20'} backdrop-blur-md px-4 py-3 flex justify-between items-center text-white shrink-0 border-b border-white/10 shadow-lg`}>
+      <nav className={`relative z-50 ${
+        scribeMode 
+          ? 'bg-amber-900/40' 
+          : (theme === 'dark' ? 'bg-slate-900/50' : 'bg-black/20')
+      } backdrop-blur-md px-4 py-3 flex justify-between items-center text-white shrink-0 border-b border-white/10 shadow-lg`}>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate("/")}

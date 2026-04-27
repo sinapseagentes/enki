@@ -223,10 +223,18 @@ export const Dashboard = () => {
 
   return (
     <div 
-      className={`min-h-screen transition-all duration-500 ${theme === 'dark' ? 'bg-theme-page' : (isGradient ? `bg-gradient-to-br ${dashboardBg}` : 'bg-theme-page')}`}
-      style={!isGradient && theme !== 'dark' && dashboardBg ? { backgroundColor: dashboardBg } : {}}
+      className={`min-h-screen transition-all duration-500 ${
+        scribeMode 
+          ? 'bg-theme-page text-theme-main' 
+          : (theme === 'dark' ? 'bg-theme-page' : (isGradient ? `bg-gradient-to-br ${dashboardBg}` : 'bg-theme-page'))
+      }`}
+      style={!scribeMode && !isGradient && theme !== 'dark' && dashboardBg ? { backgroundColor: dashboardBg } : {}}
     >
-      <nav className={`relative z-50 ${theme === 'dark' ? 'bg-slate-900/50' : 'bg-blue-600'} backdrop-blur-md px-4 py-3 shadow-md flex justify-between items-center text-white transition-colors duration-300`}>
+      <nav className={`relative z-50 ${
+        scribeMode 
+          ? 'bg-amber-900/60' 
+          : (theme === 'dark' ? 'bg-slate-900/50' : 'bg-blue-600')
+      } backdrop-blur-md px-4 py-3 shadow-md flex justify-between items-center text-white transition-colors duration-300`}>
         <div className="flex items-center gap-2">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
