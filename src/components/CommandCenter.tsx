@@ -1,21 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { subscribeToActivities } from "../services/activityService";
 import { subscribeToNotifications, markNotificationAsRead } from "../services/notificationService";
+import { subscribeToMessages, sendMessage } from "../services/messageService";
 import { useAuth } from "../contexts/AuthContext";
-import type { Activity, AppNotification } from "../types";
+import type { Activity, AppNotification, Message, UserProfile } from "../types";
 
 interface CommandCenterProps {
   boardId: string;
-  initialTab?: "activities" | "notifications";
+  members: UserProfile[];
+  initialTab?: "activities" | "notifications" | "messages";
   onClose: () => void;
   scribeMode?: boolean;
 }
 
-export const CommandCenter = ({ boardId, initialTab = "activities", onClose, scribeMode }: CommandCenterProps) => {
+export const CommandCenter = ({ boardId, members, initialTab = "activities", onClose, scribeMode }: CommandCenterProps) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"activities" | "notifications">(initialTab);
+  const [activeTab, setActiveTab] = useState<"activities" | "notifications" | "messages">(initialTab);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedRecipient, setSelectedRecipient] = useState<UserProfile | null>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const unsubscribeActivities = subscribeToActivities(boardId, (fetched) => {
@@ -34,6 +40,40 @@ export const CommandCenter = ({ boardId, initialTab = "activities", onClose, scr
       unsubscribeNotifications();
     };
   }, [boardId, user]);
+
+  useEffect(() => {
+    if (user && selectedRecipient && activeTab === "messages") {
+      const unsubscribeMessages = subscribeToMessages(user.uid, selectedRecipient.uid, (fetched) => {
+        setMessages(fetched);
+      });
+      return () => unsubscribeMessages();
+    }
+  }, [user, selectedRecipient, activeTab]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, activeTab]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !selectedRecipient || !newMessage.trim()) return;
+
+    const messageData = {
+      senderId: user.uid,
+      senderName: user.displayName || "Usuário",
+      receiverId: selectedRecipient.uid,
+      text: newMessage.trim(),
+    };
+
+    try {
+      await sendMessage(messageData);
+      setNewMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -102,11 +142,18 @@ export const CommandCenter = ({ boardId, initialTab = "activities", onClose, scr
                 </span>
               )}
             </button>
+            <button 
+              onClick={() => setActiveTab("messages")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-all ${activeTab === 'messages' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+              {scribeMode ? "Escribas" : "Mensagens"}
+            </button>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 custom-scrollbar">
           {activeTab === "activities" ? (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {activities.length === 0 ? (
@@ -129,7 +176,7 @@ export const CommandCenter = ({ boardId, initialTab = "activities", onClose, scr
                 ))
               )}
             </div>
-          ) : (
+          ) : activeTab === "notifications" ? (
             <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {notifications.length === 0 ? (
                 <p className="text-center text-gray-400 italic text-sm py-20">Tudo limpo por aqui! 🎉</p>
@@ -148,6 +195,84 @@ export const CommandCenter = ({ boardId, initialTab = "activities", onClose, scr
                     <p className="text-[10px] text-gray-400 mt-2">{formatTime(n.createdAt)}</p>
                   </div>
                 ))
+              )}
+            </div>
+          ) : (
+            <div className="h-full flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {!selectedRecipient ? (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Membros do Tabuleiro</p>
+                  {members
+                    .filter(m => m.uid !== user?.uid)
+                    .map(member => (
+                      <button
+                        key={member.uid}
+                        onClick={() => setSelectedRecipient(member)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 hover:border-blue-200 transition-all text-left"
+                      >
+                        {member.photoURL ? (
+                          <img src={member.photoURL} className="w-10 h-10 rounded-full object-cover" alt="" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase">
+                            {member.displayName.charAt(0)}
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">{member.displayName}</p>
+                          <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Clique para conversar</p>
+                        </div>
+                      </button>
+                    ))}
+                  {members.filter(m => m.uid !== user?.uid).length === 0 && (
+                    <p className="text-center text-gray-400 italic text-sm py-20">Você está sozinho nesta tábua.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+                    <button onClick={() => setSelectedRecipient(null)} className="p-1 hover:bg-gray-100 rounded-full">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold uppercase">
+                        {selectedRecipient.displayName.charAt(0)}
+                      </div>
+                      <span className="text-sm font-bold text-gray-800">{selectedRecipient.displayName}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 space-y-4 mb-4">
+                    {messages.length === 0 ? (
+                      <p className="text-center text-gray-400 italic text-xs py-10">Inicie uma conversa sagrada...</p>
+                    ) : (
+                      messages.map(msg => (
+                        <div key={msg.id} className={`flex flex-col ${msg.senderId === user?.uid ? 'items-end' : 'items-start'}`}>
+                          <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.senderId === user?.uid ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-bl-none'}`}>
+                            {msg.text}
+                          </div>
+                          <span className="text-[8px] text-gray-400 mt-1 uppercase font-bold">{formatTime(msg.createdAt)}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <form onSubmit={handleSendMessage} className="mt-auto flex gap-2 pt-2 border-t border-gray-100">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder={scribeMode ? "Inscreva sua vontade..." : "Digite sua mensagem..."}
+                      className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newMessage.trim()}
+                      className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md active-shrink"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                    </button>
+                  </form>
+                </div>
               )}
             </div>
           )}

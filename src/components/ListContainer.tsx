@@ -2,18 +2,20 @@ import { useState, useRef } from "react";
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CardItem } from "./CardItem";
-import type { List, Card } from "../types";
+import type { List, Card, Tag } from "../types";
 import { archiveList, restoreList, updateListTitle } from "../services/listService";
 import { useTheme } from "../contexts/ThemeContext";
 
 interface ListContainerProps {
   list: List;
   cards: Card[];
+  tags?: Tag[];
   onAddCard: (listId: string, title: string) => void;
   onCardClick: (card: Card) => void;
 }
 
-export const ListContainer = ({ list, cards, onAddCard, onCardClick }: ListContainerProps) => {
+export const ListContainer = ({ list, cards, tags, onAddCard, onCardClick }: ListContainerProps) => {
+
   const { scribeMode } = useTheme();
   const {
     attributes,
@@ -151,9 +153,15 @@ export const ListContainer = ({ list, cards, onAddCard, onCardClick }: ListConta
           items={cards.map((c) => c.id!)}
           strategy={verticalListSortingStrategy}
         >
-          {cards.map((card) => (
-            <CardItem key={card.id} card={card} onClick={() => onCardClick(card)} />
-          ))}
+              {cards.map((card) => (
+                <CardItem 
+                  key={card.id} 
+                  card={card} 
+                  tags={tags}
+                  onClick={() => onCardClick(card)} 
+                />
+              ))}
+
         </SortableContext>
       </div>
 

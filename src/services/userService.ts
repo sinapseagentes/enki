@@ -6,6 +6,8 @@ const USERS_COLLECTION = "users";
 export interface UserSettings {
   dashboardBackground?: string;
   themePreference?: "light" | "dark";
+  displayName?: string;
+  photoURL?: string;
 }
 
 export const getUserSettings = async (userId: string): Promise<UserSettings | null> => {
@@ -13,6 +15,20 @@ export const getUserSettings = async (userId: string): Promise<UserSettings | nu
   const snap = await getDoc(userRef);
   if (snap.exists()) {
     return snap.data() as UserSettings;
+  }
+  return null;
+};
+
+export const getUserProfile = async (userId: string): Promise<{uid: string, displayName: string, photoURL: string} | null> => {
+  const userRef = doc(db, USERS_COLLECTION, userId);
+  const snap = await getDoc(userRef);
+  if (snap.exists()) {
+    const data = snap.data();
+    return {
+      uid: userId,
+      displayName: data.displayName || 'Usuário Anônimo',
+      photoURL: data.photoURL || ''
+    };
   }
   return null;
 };

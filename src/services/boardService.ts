@@ -1,7 +1,7 @@
 import { collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc, updateDoc, arrayUnion, getDocs } from "firebase/firestore";
 import type { DocumentData, QuerySnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import type { Board } from "../types";
+import type { Board, Tag } from "../types";
 
 const BOARDS_COLLECTION = "boards";
 const USERS_COLLECTION = "users";
@@ -62,8 +62,14 @@ export const updateBoardTitle = async (boardId: string, title: string) => {
 
 export const updateBoardBackground = async (boardId: string, background: string) => {
   const boardRef = doc(db, BOARDS_COLLECTION, boardId);
-  await updateDoc(boardRef, { background, updatedAt: Date.now() });
+  await updateDoc(boardRef, { background });
 };
+
+export const updateBoardTags = async (boardId: string, tags: Tag[]) => {
+  const boardRef = doc(db, BOARDS_COLLECTION, boardId);
+  await updateDoc(boardRef, { tags });
+};
+
 
 export const subscribeToBoard = (boardId: string, callback: (board: Board) => void) => {
   const boardRef = doc(db, BOARDS_COLLECTION, boardId);

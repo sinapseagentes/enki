@@ -1,9 +1,19 @@
-import { collection, addDoc, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
 import type { DocumentData, QuerySnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { Card } from "../types";
+import { executeAutomations } from "./automationService";
 
 const CARDS_COLLECTION = "cards";
+
+export const getCard = async (cardId: string): Promise<Card | null> => {
+  const cardRef = doc(db, CARDS_COLLECTION, cardId);
+  const snapshot = await getDoc(cardRef);
+  if (snapshot.exists()) {
+    return { id: snapshot.id, ...snapshot.data() } as Card;
+  }
+  return null;
+};
 
 export const createCard = async (boardId: string, listId: string, title: string, order: number): Promise<string> => {
   const newCard: Card = {
@@ -15,6 +25,10 @@ export const createCard = async (boardId: string, listId: string, title: string,
   };
 
   const docRef = await addDoc(collection(db, CARDS_COLLECTION), newCard);
+  
+  // Trigger automation
+  executeAutomations(boardId, 'card_created', { ...newCard, id: docRef.id });
+  
   return docRef.id;
 };
 
@@ -42,11 +56,23 @@ export const subscribeToCards = (
 export const updateCard = async (cardId: string, updates: Partial<Card>) => {
   const cardRef = doc(db, CARDS_COLLECTION, cardId);
   await updateDoc(cardRef, updates);
+
+  if (updates.listId || updates.boardId) {
+    const card = await getCard(cardId);
+    if (card) {
+      executeAutomations(card.boardId, 'card_moved', card);
+    }
+  }
 };
 
 export const archiveCard = async (cardId: string) => {
   const cardRef = doc(db, CARDS_COLLECTION, cardId);
   await updateDoc(cardRef, { archived: true });
+
+  const card = await getCard(cardId);
+  if (card) {
+    executeAutomations(card.boardId, 'card_archived', card);
+  }
 };
 
 export const restoreCard = async (cardId: string) => {
@@ -69,6 +95,11 @@ export const moveCard = async (cardId: string, targetBoardId: string, targetList
     listId: targetListId,
     order: newOrder
   });
+
+  const card = await getCard(cardId);
+  if (card) {
+    executeAutomations(targetBoardId, 'card_moved', card);
+  }
 };
 
 /**

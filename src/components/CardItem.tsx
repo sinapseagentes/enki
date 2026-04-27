@@ -1,14 +1,15 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Card } from "../types";
+import type { Card, Tag } from "../types";
 import { archiveCard, restoreCard } from "../services/cardService";
 
 interface CardItemProps {
   card: Card & { isFilteredOut?: boolean };
+  tags?: Tag[];
   onClick: () => void;
 }
 
-export const CardItem = ({ card, onClick }: CardItemProps) => {
+export const CardItem = ({ card, tags, onClick }: CardItemProps) => {
   const {
     attributes,
     listeners,
@@ -85,6 +86,25 @@ export const CardItem = ({ card, onClick }: CardItemProps) => {
       {card.coverUrl && (
         <img src={card.coverUrl} alt="" className="w-full h-32 object-cover border-b" />
       )}
+      
+      {/* Display tags in list view */}
+      {card.tagIds && card.tagIds.length > 0 && tags && (
+        <div className="flex flex-wrap gap-1 p-2 pb-0">
+          {card.tagIds.map(tagId => {
+            const tag = tags.find(t => t.id === tagId);
+            if (!tag) return null;
+            return (
+              <div 
+                key={tagId} 
+                className="h-1.5 w-8 rounded-full shadow-sm" 
+                style={{ backgroundColor: tag.color }}
+                title={tag.name}
+              />
+            );
+          })}
+        </div>
+      )}
+
       <div className="p-3">
         <p className="text-sm text-theme-main break-words pr-6">{card.title}</p>
 

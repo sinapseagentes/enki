@@ -29,6 +29,7 @@ import { CardItem } from "../components/CardItem";
 import { CardModal } from "../components/CardModal";
 import { InviteModal } from "../components/InviteModal";
 import { SettingsModal } from "../components/SettingsModal";
+import { AutomationModal } from "../components/AutomationModal";
 import { CommandCenter } from "../components/CommandCenter";
 import type { List, Card, Board } from "../types";
 import { COLORS, GRADIENTS } from "../constants/design";
@@ -48,6 +49,7 @@ export const BoardPage = () => {
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isInviting, setIsInviting] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAutomationModal, setShowAutomationModal] = useState(false);
   const [showCommandCenter, setShowCommandCenter] = useState(false);
   const [commandCenterTab, setCommandCenterTab] = useState<"activities" | "notifications">("activities");
   const [showBgMenu, setShowBgMenu] = useState(false);
@@ -55,6 +57,9 @@ export const BoardPage = () => {
   const [filterLabel, setFilterLabel] = useState<string | null>(null);
   const [filterMember, setFilterMember] = useState<string | null>(null);
   const [filterDateStatus, setFilterDateStatus] = useState<"overdue" | "today" | null>(null);
+  const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [filterTagSearch, setFilterTagSearch] = useState("");
+  const [showFilterTagDropdown, setShowFilterTagDropdown] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   useEffect(() => {
@@ -256,6 +261,7 @@ export const BoardPage = () => {
         const matchesText = card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            (card.description?.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesLabel = !filterLabel || card.colorLabel === filterLabel;
+        const matchesTag = !filterTag || card.tagIds?.includes(filterTag);
         const matchesMember = !filterMember || card.title.includes(`@${members.find(m => m.uid === filterMember)?.displayName}`); 
         
         const isCardOverdue = card.dueDate ? card.dueDate < Date.now() : false;
@@ -267,7 +273,7 @@ export const BoardPage = () => {
         
         return {
           ...card,
-          isFilteredOut: !(matchesText && matchesLabel && matchesMember && matchesDate)
+          isFilteredOut: !(matchesText && matchesLabel && matchesTag && matchesMember && matchesDate)
         };
       });
   };
@@ -317,25 +323,26 @@ export const BoardPage = () => {
             <button 
               onClick={() => setShowFilterMenu(!showFilterMenu)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                filterLabel || searchTerm || filterMember || filterDateStatus ? "bg-yellow-400 text-yellow-900 shadow-lg" : "bg-white/10 text-white hover:bg-white/20"
+                filterLabel || searchTerm || filterMember || filterDateStatus || filterTag ? "bg-yellow-400 text-yellow-900 shadow-lg" : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
               <span className="hidden sm:inline">{scribeMode ? "Crivo" : "Filtro"}</span>
-              {(filterLabel || searchTerm || filterMember || filterDateStatus) && <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />}
+              {(filterLabel || searchTerm || filterMember || filterDateStatus || filterTag) && <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />}
             </button>
 
             {showFilterMenu && (
               <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] p-4 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-gray-800 font-bold text-sm">Filtros Ativos</h4>
-                  {(filterLabel || searchTerm || filterMember || filterDateStatus) && (
+                  {(filterLabel || searchTerm || filterMember || filterDateStatus || filterTag) && (
                     <button 
                       onClick={() => { 
                         setFilterLabel(null); 
                         setSearchTerm(""); 
                         setFilterMember(null);
                         setFilterDateStatus(null);
+                        setFilterTag(null);
                       }}
                       className="text-[10px] text-blue-600 hover:underline font-bold"
                     >
@@ -379,6 +386,80 @@ export const BoardPage = () => {
                           )}
                         </button>
                       ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Sinetes (Tags)</span>
+                    
+                    {/* Selected Filter Tag */}
+                    {filterTag && (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {(() => {
+                          const tag = board?.tags?.find(t => t.id === filterTag);
+                          if (!tag) return null;
+                          return (
+                            <div 
+                              className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm"
+                              style={{ backgroundColor: tag.color }}
+                            >
+                              {tag.name}
+                              <button onClick={() => setFilterTag(null)} className="hover:bg-black/20 rounded-full p-0.5">
+                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Tag Search/Picker for Filter */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={filterTagSearch}
+                        onChange={(e) => {
+                          setFilterTagSearch(e.target.value);
+                          setShowFilterTagDropdown(true);
+                        }}
+                        onFocus={() => setShowFilterTagDropdown(true)}
+                        placeholder="Filtrar por sinete..."
+                        className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      
+                      {showFilterTagDropdown && board?.tags && (
+                        <>
+                          <div className="fixed inset-0 z-[110]" onClick={() => setShowFilterTagDropdown(false)}></div>
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-100 z-[120] max-h-40 overflow-y-auto">
+                            {board.tags
+                              .filter(tag => 
+                                tag.id !== filterTag &&
+                                tag.name.toLowerCase().includes(filterTagSearch.toLowerCase())
+                              )
+                              .map(tag => (
+                                <button
+                                  key={tag.id}
+                                  onClick={() => {
+                                    setFilterTag(tag.id);
+                                    setFilterTagSearch("");
+                                    setShowFilterTagDropdown(false);
+                                  }}
+                                  className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-gray-50 text-[10px] transition-colors text-left"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }}></div>
+                                    <span>{tag.name}</span>
+                                  </div>
+                                </button>
+                              ))}
+                            {board.tags.filter(tag => tag.id !== filterTag && tag.name.toLowerCase().includes(filterTagSearch.toLowerCase())).length === 0 && (
+                              <div className="px-3 py-2 text-center text-[10px] text-gray-400 italic">
+                                Nenhum sinete encontrado
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -429,6 +510,21 @@ export const BoardPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowAutomationModal(true)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-lg active-shrink ${
+              scribeMode 
+                ? "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-900/40" 
+                : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/40"
+            }`}
+            title={scribeMode ? "Vontade de Enki" : "Automações"}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span className="hidden md:inline">{scribeMode ? "Vontade de Enki" : "Automações"}</span>
+          </button>
+
           <button 
             onClick={() => setShowSettings(true)}
             className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all active-shrink"
@@ -619,6 +715,7 @@ export const BoardPage = () => {
       {showCommandCenter && boardId && (
         <CommandCenter 
           boardId={boardId} 
+          members={members}
           initialTab={commandCenterTab}
           onClose={() => setShowCommandCenter(false)} 
           scribeMode={scribeMode}
@@ -626,7 +723,11 @@ export const BoardPage = () => {
       )}
 
       {showSettings && (
-        <SettingsModal onClose={() => setShowSettings(false)} />
+        <SettingsModal board={board || undefined} onClose={() => setShowSettings(false)} />
+      )}
+      
+      {showAutomationModal && boardId && (
+        <AutomationModal boardId={boardId} onClose={() => setShowAutomationModal(false)} />
       )}
     </div>
   );

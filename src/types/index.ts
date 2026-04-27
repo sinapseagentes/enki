@@ -5,6 +5,12 @@ export interface UserProfile {
   photoURL: string;
 }
 
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface Board {
   id?: string;
   title: string;
@@ -12,6 +18,7 @@ export interface Board {
   members: string[]; // array of user UIDs
   archived?: boolean;
   background?: string; // Color hex or gradient class
+  tags?: Tag[]; // Board-specific tags
   createdAt: number;
   updatedAt: number;
 }
@@ -72,14 +79,25 @@ export interface Card {
   boardId: string;
   title: string;
   description?: string;
-  colorLabel?: string; // Hex color code
-  dueDate?: number;    // Unix timestamp (ms)
+  colorLabel?: string; 
+  tagIds?: string[];
+  dueDate?: number;    
   checklists?: ChecklistItem[];
   attachments?: Attachment[];
   coverUrl?: string;
   order: number;
   archived?: boolean;
   createdAt: number;
+}
+
+export interface Message {
+  id?: string;
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+  text: string;
+  createdAt: number;
+  conversationId: string;
 }
 
 export interface AppNotification {

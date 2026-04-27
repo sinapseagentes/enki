@@ -1,9 +1,24 @@
-import { collection, addDoc, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDocs } from "firebase/firestore";
 import type { DocumentData, QuerySnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { List } from "../types";
 
 const LISTS_COLLECTION = "lists";
+
+export const getLists = async (boardId: string): Promise<List[]> => {
+  const q = query(
+    collection(db, LISTS_COLLECTION),
+    where("boardId", "==", boardId),
+    orderBy("order", "asc")
+  );
+
+  const snapshot = await getDocs(q);
+  const lists: List[] = [];
+  snapshot.forEach((doc) => {
+    lists.push({ id: doc.id, ...doc.data() } as List);
+  });
+  return lists;
+};
 
 export const createList = async (boardId: string, title: string, order: number): Promise<string> => {
   const newList: List = {

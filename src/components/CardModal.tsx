@@ -49,6 +49,21 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
   const [mentionFilter, setMentionFilter] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(card.tagIds || []);
+  const [tagSearch, setTagSearch] = useState("");
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTagIds(prev => 
+      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    );
+  };
+
+  useEffect(() => {
+    const compCount = checklists.filter(i => i.completed).length;
+    setProgressPercent(checklists.length > 0 ? Math.round((compCount / checklists.length) * 100) : 0);
+  }, [checklists]);
   
   // V9 Move/Copy States
   const [showMoveUI, setShowMoveUI] = useState(false);
@@ -103,6 +118,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
         title,
         description,
         colorLabel: colorLabel || "",
+        tagIds: selectedTagIds,
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
         checklists,
         attachments,
@@ -315,9 +331,6 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
     setChecklists(checklists.filter(item => item.id !== id));
   };
 
-  const completedCount = checklists.filter(i => i.completed).length;
-  const progressPercent = checklists.length > 0 ? Math.round((completedCount / checklists.length) * 100) : 0;
-
   const formatCommentDate = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -403,6 +416,87 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
           <div className="flex flex-col md:flex-row gap-6">
             {/* Main Content */}
             <div className="flex-1 space-y-6">
+              {/* Tags Section */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                  Sinetes (Tags)
+                </h3>
+                
+                {/* Selected Tags Display */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {selectedTagIds.map(id => {
+                    const tag = board?.tags?.find(t => t.id === id);
+                    if (!tag) return null;
+                    return (
+                      <div 
+                        key={id}
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm animate-in zoom-in-95 duration-150"
+                        style={{ backgroundColor: tag.color }}
+                      >
+                        {tag.name}
+                        <button 
+                          onClick={() => toggleTag(id)}
+                          className="hover:bg-black/20 rounded-full p-0.5 transition-colors"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Tag Search/Picker */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={tagSearch}
+                    onChange={(e) => {
+                      setTagSearch(e.target.value);
+                      setShowTagDropdown(true);
+                    }}
+                    onFocus={() => setShowTagDropdown(true)}
+                    placeholder="Procurar ou adicionar sinete..."
+                    className="w-full px-3 py-2 bg-theme-surface text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  
+                  {showTagDropdown && board?.tags && (
+                    <>
+                      <div className="fixed inset-0 z-[60]" onClick={() => setShowTagDropdown(false)}></div>
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-theme z-[70] max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150">
+                        {board.tags
+                          .filter(tag => 
+                            !selectedTagIds.includes(tag.id) && 
+                            tag.name.toLowerCase().includes(tagSearch.toLowerCase())
+                          )
+                          .map(tag => (
+                            <button
+                              key={tag.id}
+                              onClick={() => {
+                                toggleTag(tag.id);
+                                setTagSearch("");
+                                setShowTagDropdown(false);
+                              }}
+                              className="w-full flex items-center justify-between px-3 py-2 hover:bg-theme-surface text-sm transition-colors text-theme-main text-left"
+                            >
+                              <div className="flex items-center gap-2 text-left">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }}></div>
+                                <span>{tag.name}</span>
+                              </div>
+                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Adicionar</span>
+                            </button>
+                          ))}
+                        {board.tags.filter(tag => !selectedTagIds.includes(tag.id) && tag.name.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
+                          <div className="px-3 py-4 text-center text-xs text-theme-secondary italic">
+                            Nenhum sinete encontrado
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <h3 className="text-lg font-semibold text-theme-main mb-2 flex items-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
