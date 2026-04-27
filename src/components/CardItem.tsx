@@ -54,11 +54,17 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className={`group rounded shadow-sm border mb-2 cursor-grab active:cursor-grabbing transition-all relative overflow-hidden hover-lift active-shrink ${
+          className={`group rounded shadow-sm border mb-2 cursor-grab active:cursor-grabbing relative overflow-hidden ${
+            snapshot.isDragging ? "z-[1000] shadow-2xl scale-[1.02] ring-2 ring-blue-500/50" : "transition-all hover-lift active-shrink"
+          } ${
             card.archived ? "bg-theme-surface/50 border-theme opacity-75 grayscale" : "bg-theme-card border-theme"
-          } ${snapshot.isDragging ? "shadow-lg rotate-2 scale-105" : ""} ${
+          } ${
             card.isFilteredOut ? "opacity-10 scale-95 pointer-events-none blur-[1px]" : "opacity-100"
           }`}
+          style={{
+            ...provided.draggableProps.style,
+            transition: snapshot.isDragging ? 'none' : provided.draggableProps.style?.transition
+          }}
         >
           {card.colorLabel && !card.coverUrl && (
             <div className="h-2 w-full" style={{ backgroundColor: card.colorLabel }} />
