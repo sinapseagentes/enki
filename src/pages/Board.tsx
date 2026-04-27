@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
-import { subscribeToLists, createList, updateListOrder } from "../services/listService";
-import { subscribeToCards, createCard, updateCard } from "../services/cardService";
+import { subscribeToLists, createList } from "../services/listService";
+import { subscribeToCards, createCard } from "../services/cardService";
 import { subscribeToBoard, getMembersProfile, updateBoardBackground } from "../services/boardService";
 import { logActivity } from "../services/activityService";
 import { useAuth } from "../contexts/AuthContext";
@@ -120,18 +120,27 @@ export const BoardPage = () => {
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
+    // Usar writeBatch do Firestore para evitar disparar múltiplos snapshots
+    const { writeBatch, doc } = await import("firebase/firestore");
+    const { db } = await import("../lib/firebase");
+    const batch = writeBatch(db);
+
     if (type === "list") {
-      const newLists = Array.from(lists);
+      const newLists = [...lists].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       const [movedList] = newLists.splice(source.index, 1);
       newLists.splice(destination.index, 0, movedList);
-      setLists(newLists);
+      
+      // Update local state optimistically
+      setLists(newLists.map((l, i) => ({ ...l, order: i })));
 
       try {
-        await Promise.all(
-          newLists.map((list, index) => updateListOrder(list.id!, index))
-        );
+        newLists.forEach((list, index) => {
+          const listRef = doc(db, "lists", list.id!);
+          batch.update(listRef, { order: index });
+        });
+        await batch.commit();
       } catch (error) {
-        console.error("Error updating list order:", error);
+        console.error("Error updating lists batch:", error);
       }
       return;
     }
@@ -141,10 +150,14 @@ export const BoardPage = () => {
       const destinationListId = destination.droppableId;
 
       if (sourceListId === destinationListId) {
-        const listCards = cards.filter(c => c.listId === sourceListId).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
+        const listCards = cards
+          .filter(c => c.listId === sourceListId)
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        
         const [movedCard] = listCards.splice(source.index, 1);
         listCards.splice(destination.index, 0, movedCard);
         
+        // Optimistic update
         const updatedCards = cards.map(c => {
           if (c.listId === sourceListId) {
             const newIndex = listCards.findIndex(lc => lc.id === c.id);
@@ -155,40 +168,52 @@ export const BoardPage = () => {
         setCards(updatedCards);
 
         try {
-          await Promise.all(
-            listCards.map((c, idx) => updateCard(c.id!, { order: idx }))
-          );
+          listCards.forEach((c, idx) => {
+            const cardRef = doc(db, "cards", c.id!);
+            batch.update(cardRef, { order: idx });
+          });
+          await batch.commit();
         } catch (error) {
-          console.error("Error updating cards order:", error);
+          console.error("Error updating cards batch:", error);
         }
       } else {
-        const sourceListCards = cards.filter(c => c.listId === sourceListId).sort((a,b) => a.order - b.order);
-        const destListCards = cards.filter(c => c.listId === destinationListId).sort((a,b) => a.order - b.order);
+        const sourceListCards = cards
+          .filter(c => c.listId === sourceListId)
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        const destListCards = cards
+          .filter(c => c.listId === destinationListId)
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
         
         const [movedCard] = sourceListCards.splice(source.index, 1);
-        const updatedMovedCard = { ...movedCard, listId: destinationListId, order: destination.index };
+        const updatedMovedCard = { ...movedCard, listId: destinationListId };
         destListCards.splice(destination.index, 0, updatedMovedCard);
         
+        // Optimistic update
         const updatedCards = cards.map(c => {
-          if (c.id === draggableId) return updatedMovedCard;
+          if (c.id === draggableId) return { ...updatedMovedCard, order: destination.index };
           if (c.listId === sourceListId) {
             const newIndex = sourceListCards.findIndex(lc => lc.id === c.id);
-            if (newIndex !== -1) return { ...c, order: newIndex };
+            return newIndex !== -1 ? { ...c, order: newIndex } : c;
           }
           if (c.listId === destinationListId) {
             const newIndex = destListCards.findIndex(lc => lc.id === c.id);
-            if (newIndex !== -1) return { ...c, order: newIndex };
+            return newIndex !== -1 ? { ...c, order: newIndex } : c;
           }
           return c;
         });
         setCards(updatedCards);
 
         try {
-          await Promise.all([
-            ...sourceListCards.map((c, idx) => updateCard(c.id!, { order: idx })),
-            ...destListCards.map((c, idx) => updateCard(c.id!, { order: idx, listId: c.id === movedCard.id ? destinationListId : c.listId }))
-          ]);
-
+          sourceListCards.forEach((c, idx) => {
+            const cardRef = doc(db, "cards", c.id!);
+            batch.update(cardRef, { order: idx });
+          });
+          destListCards.forEach((c, idx) => {
+            const cardRef = doc(db, "cards", c.id!);
+            batch.update(cardRef, { order: idx, listId: destinationListId });
+          });
+          await batch.commit();
+          
           if (user) {
             const sourceList = lists.find(l => l.id === sourceListId);
             const destList = lists.find(l => l.id === destinationListId);
@@ -205,7 +230,7 @@ export const BoardPage = () => {
             });
           }
         } catch (error) {
-          console.error("Error updating cross-list cards:", error);
+          console.error("Error updating cross-list batch:", error);
         }
       }
     }
@@ -218,7 +243,6 @@ export const BoardPage = () => {
   const getFilteredCards = (listId: string) => {
     return cards
       .filter(c => c.listId === listId)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) // Ordenação explícita
       .map(card => {
         const matchesText = card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            (card.description?.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -492,7 +516,7 @@ export const BoardPage = () => {
                 ref={provided.innerRef}
                 className="flex items-start gap-4 h-full"
               >
-                {[...lists].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((list, index) => (
+                {lists.map((list, index) => (
                   <ListContainer 
                     key={list.id} 
                     list={list} 
