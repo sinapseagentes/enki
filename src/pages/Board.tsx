@@ -218,6 +218,7 @@ export const BoardPage = () => {
   const getFilteredCards = (listId: string) => {
     return cards
       .filter(c => c.listId === listId)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) // Ordenação explícita
       .map(card => {
         const matchesText = card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            (card.description?.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -491,7 +492,7 @@ export const BoardPage = () => {
                 ref={provided.innerRef}
                 className="flex items-start gap-4 h-full"
               >
-                {lists.map((list, index) => (
+                {[...lists].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((list, index) => (
                   <ListContainer 
                     key={list.id} 
                     list={list} 
