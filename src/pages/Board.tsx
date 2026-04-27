@@ -28,6 +28,7 @@ import { ListContainer } from "../components/ListContainer";
 import { CardItem } from "../components/CardItem";
 import { CardModal } from "../components/CardModal";
 import { InviteModal } from "../components/InviteModal";
+import { SettingsModal } from "../components/SettingsModal";
 import { CommandCenter } from "../components/CommandCenter";
 import type { List, Card, Board } from "../types";
 import { COLORS, GRADIENTS } from "../constants/design";
@@ -36,7 +37,7 @@ export const BoardPage = () => {
   const { id: boardId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, scribeMode } = useTheme();
 
   const [board, setBoard] = useState<Board | null>(null);
   const [lists, setLists] = useState<List[]>([]);
@@ -46,6 +47,7 @@ export const BoardPage = () => {
   const [newListTitle, setNewListTitle] = useState("");
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isInviting, setIsInviting] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [showCommandCenter, setShowCommandCenter] = useState(false);
   const [commandCenterTab, setCommandCenterTab] = useState<"activities" | "notifications">("activities");
   const [showBgMenu, setShowBgMenu] = useState(false);
@@ -280,19 +282,19 @@ export const BoardPage = () => {
           <button 
             onClick={() => navigate("/")}
             className="hover:bg-white/20 p-1.5 rounded transition-colors"
-            title="Voltar ao Dashboard"
+            title={scribeMode ? "Voltar ao Centro de Ur" : "Voltar ao Dashboard"}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </button>
           <h1 className="font-bold text-lg hidden lg:block truncate max-w-[150px]">
-            {board?.title || "Carregando..."}
+            {board?.title || (scribeMode ? "Invocando Escriba..." : "Carregando...")}
           </h1>
 
           {/* Board Search Bar */}
           <div className="relative group ml-2">
             <input 
               type="text"
-              placeholder="Buscar cartões..."
+              placeholder={scribeMode ? "Buscar selos de argila..." : "Buscar cartões..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-40 sm:w-64 bg-white/10 hover:bg-white/20 focus:bg-white text-white focus:text-gray-900 border border-white/20 focus:border-blue-500 rounded-lg pl-9 pr-3 py-1.5 transition-all outline-none text-sm placeholder-white/60 focus:placeholder-gray-400"
@@ -311,7 +313,7 @@ export const BoardPage = () => {
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-              <span className="hidden sm:inline">Filtro</span>
+              <span className="hidden sm:inline">{scribeMode ? "Crivo" : "Filtro"}</span>
               {(filterLabel || searchTerm || filterMember || filterDateStatus) && <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />}
             </button>
 
@@ -420,21 +422,20 @@ export const BoardPage = () => {
 
         <div className="flex items-center gap-3">
           <button 
-            onClick={toggleTheme}
+            onClick={() => setShowSettings(true)}
             className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all active-shrink"
-            title={theme === "light" ? "Mudar para Dark Mode" : "Mudar para Light Mode"}
+            title="Configurações"
           >
-            {theme === "light" ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 18v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-            )}
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
           </button>
           
           <button 
             onClick={() => { setCommandCenterTab("notifications"); setShowCommandCenter(true); }}
             className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all relative active-shrink"
-            title="Notificações"
+            title={scribeMode ? "Decretos" : "Notificações"}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
           </button>
@@ -498,18 +499,11 @@ export const BoardPage = () => {
             )}
           </div>
 
-            <button 
-              onClick={() => { setCommandCenterTab("activities"); setShowCommandCenter(true); }}
-              className={`p-2 rounded-full transition-all active-shrink ${showCommandCenter && commandCenterTab === 'activities' ? "bg-white text-blue-600" : "text-white/80 hover:text-white hover:bg-white/10"}`}
-              title="Histórico de Atividades"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </button>
           <button 
             onClick={() => setIsInviting(true)}
             className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-1.5 rounded-md flex items-center gap-2 transition-all"
           >
-            Convidar
+            {scribeMode ? "Convocar" : "Convidar"}
           </button>
         </div>
       </nav>
@@ -546,7 +540,7 @@ export const BoardPage = () => {
                   className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold p-3 rounded-lg flex items-center gap-2 transition-all"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                  Adicionar outra lista
+                  {scribeMode ? "Adicionar Coluna de Ur" : "Adicionar outra lista"}
                 </button>
               ) : (
                 <div className="bg-theme-surface p-3 rounded-lg shadow-xl border border-theme animate-in fade-in slide-in-from-top-2 duration-200">
@@ -554,7 +548,7 @@ export const BoardPage = () => {
                     <input
                       autoFocus
                       type="text"
-                      placeholder="Insira o título da lista..."
+                      placeholder={scribeMode ? "Título da Coluna..." : "Insira o título da lista..."}
                       value={newListTitle}
                       onChange={(e) => setNewListTitle(e.target.value)}
                       className="w-full px-3 py-2 bg-theme-card text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -564,7 +558,7 @@ export const BoardPage = () => {
                         type="submit"
                         className="bg-blue-600 text-white text-sm px-4 py-1.5 rounded-md hover:bg-blue-700 font-semibold shadow-sm transition-all"
                       >
-                        Adicionar lista
+                        {scribeMode ? "Erguer Coluna" : "Adicionar lista"}
                       </button>
                       <button
                         type="button"
@@ -619,7 +613,12 @@ export const BoardPage = () => {
           boardId={boardId} 
           initialTab={commandCenterTab}
           onClose={() => setShowCommandCenter(false)} 
+          scribeMode={scribeMode}
         />
+      )}
+
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { NotificationBell } from "../components/NotificationBell";
+import { SettingsModal } from "../components/SettingsModal";
 import { createBoard, subscribeToBoards, archiveBoard, restoreBoard, updateBoardTitle } from "../services/boardService";
 import { subscribeToLists } from "../services/listService";
 import { updateDashboardBackground, getUserSettings } from "../services/userService";
@@ -15,6 +16,7 @@ const BoardCard = ({ board, onArchive, onRestore }: {
   onArchive: (e: React.MouseEvent, id: string) => void,
   onRestore: (e: React.MouseEvent, id: string) => void 
 }) => {
+  const { scribeMode } = useTheme();
   const navigate = useNavigate();
   const [lists, setLists] = useState<List[]>([]);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -88,7 +90,7 @@ const BoardCard = ({ board, onArchive, onRestore }: {
               <button
                 onClick={startEditTitle}
                 className="shrink-0 p-1 text-white/50 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-white/20 rounded transition-all mt-0.5"
-                title="Renomear quadro"
+                title={scribeMode ? "Batizar tábua" : "Renomear quadro"}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -106,7 +108,7 @@ const BoardCard = ({ board, onArchive, onRestore }: {
             ))}
           </div>
         )}
-        {board.archived && <span className="text-[10px] bg-black/20 text-white px-2 py-0.5 rounded mt-2 inline-block">Arquivado</span>}
+        {board.archived && <span className="text-[10px] bg-black/20 text-white px-2 py-0.5 rounded mt-2 inline-block">{scribeMode ? "Selado" : "Arquivado"}</span>}
       </div>
 
       {!isEditingTitle && (
@@ -115,7 +117,7 @@ const BoardCard = ({ board, onArchive, onRestore }: {
             <button
               onClick={(e) => onRestore(e, board.id!)}
               className="p-1.5 text-white bg-green-600 hover:bg-green-700 rounded transition-all shadow-sm"
-              title="Restaurar quadro"
+              title={scribeMode ? "Quebrar selo" : "Restaurar quadro"}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             </button>
@@ -123,7 +125,7 @@ const BoardCard = ({ board, onArchive, onRestore }: {
             <button
               onClick={(e) => onArchive(e, board.id!)}
               className="p-1.5 text-white/50 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-white/20 rounded transition-all"
-              title="Arquivar quadro"
+              title={scribeMode ? "Selar tábua" : "Arquivar quadro"}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
             </button>
@@ -137,7 +139,7 @@ const BoardCard = ({ board, onArchive, onRestore }: {
 export const Dashboard = () => {
   const { user, logout } = useAuth();
   const { showNotification } = useNotification();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, scribeMode } = useTheme();
   const navigate = useNavigate();
   const [boards, setBoards] = useState<Board[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -146,6 +148,7 @@ export const Dashboard = () => {
   const [searchBoard, setSearchBoard] = useState("");
   const [dashboardBg, setDashboardBg] = useState<string>("");
   const [showBgMenu, setShowBgMenu] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -232,15 +235,14 @@ export const Dashboard = () => {
         </div>
         <div className="flex items-center gap-4">
           <button 
-            onClick={toggleTheme}
+            onClick={() => setShowSettings(true)}
             className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all active-shrink"
-            title={theme === "light" ? "Mudar para Dark Mode" : "Mudar para Light Mode"}
+            title="Configurações"
           >
-            {theme === "light" ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 18v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-            )}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
           </button>
           
           <NotificationBell />
@@ -303,7 +305,7 @@ export const Dashboard = () => {
             onClick={logout}
             className="text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md transition-colors active-shrink"
           >
-            Sair
+            {scribeMode ? "Partir de Ur" : "Sair"}
           </button>
         </div>
       </nav>
@@ -312,14 +314,14 @@ export const Dashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
             <h1 className={`text-3xl font-bold transition-colors ${isGradient || (dashboardBg && theme !== 'dark') ? 'text-white drop-shadow-md' : 'text-theme-main'}`}>
-              Seus Quadros
+              {scribeMode ? "Suas Tábuas" : "Seus Quadros"}
             </h1>
             
             {/* Search Input */}
             <div className="relative w-full sm:w-64 group">
               <input 
                 type="text"
-                placeholder="Buscar quadros..."
+                placeholder={scribeMode ? "Discernir tábuas..." : "Buscar quadros..."}
                 value={searchBoard}
                 onChange={(e) => setSearchBoard(e.target.value)}
                 className="w-full bg-white/10 hover:bg-white/20 focus:bg-white text-white focus:text-gray-900 border border-white/20 focus:border-blue-500 rounded-lg pl-9 pr-3 py-2 transition-all outline-none text-sm placeholder-white/60 focus:placeholder-gray-400"
@@ -345,7 +347,9 @@ export const Dashboard = () => {
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-            {showArchived ? "Ocultar Arquivados" : "Mostrar Arquivados"}
+            {showArchived 
+              ? (scribeMode ? "Selar Crônicas" : "Ocultar Arquivados") 
+              : (scribeMode ? "Revelar Crônicas" : "Mostrar Arquivados")}
           </button>
         </div>
         
@@ -357,7 +361,7 @@ export const Dashboard = () => {
             >
               <span className="text-white font-medium flex items-center gap-2 group-hover:scale-105 transition-transform">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                Criar novo quadro
+                {scribeMode ? "Incisar nova tábua" : "Criar novo quadro"}
               </span>
             </div>
           )}
@@ -397,6 +401,10 @@ export const Dashboard = () => {
           ))}
         </div>
       </main>
+
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
     </div>
   );
 };

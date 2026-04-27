@@ -1,0 +1,18 @@
+# Tasks: Ollert V7 - Busca & Filtros (O Graal)
+
+- `[x]` **Dashboard: Busca de Quadros**
+  - `[x]` Adicionar input de busca no `Dashboard.tsx`.
+  - `[x]` Lógica de filtragem de `visibleBoards`.
+
+- `[x]` **Board: Busca de Cartões**
+  - `[x]` Adicionar barra de busca no Header do `Board.tsx`.
+  - `[x]` Estado de busca e atualização da visualização.
+
+- `[x]` **Board: Filtros Avançados**
+  - `[x]` Seletor de filtro por etiquetas de cor.
+  - `[x]` Seletor de filtro por membros do quadro.
+  - `[x]` Filtro por status de prazo (Atrasado/Concluído).
+
+- `[x]` **UI & Feedback**
+  - `[x]` Efeito visual de "esmaecimento" para itens não encontrados.
+  - `[x]` Contador de resultados encontrados.

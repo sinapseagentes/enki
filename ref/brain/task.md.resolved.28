@@ -1,0 +1,28 @@
+# Tarefas: Enki (Produtividade Sabatista) 🏺🏛️
+
+## 🟢 Concluídas (V8 - Command Center & V9 - Gestão Profissional)
+- `[x]` **V8: Command Center Unificado**
+  - `[x]` Criar `CommandCenter.tsx` com Glassmorphism.
+  - `[x]` Integrar Atividades e Notificações em abas laterais.
+  - `[x]` Implementar backdrop blur e animações suaves.
+- `[x]` **V9.0 - V9.2: Gestão de Itens**
+  - `[x]` Implementar lógica de Mover/Copiar cartões entre listas e quadros.
+  - `[x]` Criar interface intuitiva no `CardModal.tsx` para transposição de itens.
+- `[x]` **V9.3 - V9.4: Reconstrução DnD "Do Zero"**
+  - `[x]` Remover biblioteca RBD (antiga/instável).
+  - `[x]` Implementar `dnd-kit` modular para Listas e Cartões.
+  - `[x]` Configurar Sensores de Precisão e `DragOverlay`.
+  - `[x]` Garantir estabilidade visual (sem cards soltos).
+
+## 🟡 Em Andamento / Próximos Passos
+- `[ ]` **Refinamento de UI (Top Bar)**
+  - `[ ]` Remover ícones duplicados no Header do Board.
+  - `[ ]` Centralizar ícones de tempo e atividades.
+- `[/]` **V10: Settings & Customização**
+  - `[ ]` Criar Página/Modal de Configurações.
+  - `[ ]` Implementar **"Modo Escriba Sumeriano"** (Toggle de nomenclatura histórica).
+  - `[ ]` Centralizar preferências de Tema e Background.
+
+## 🔴 Futuro / Backlog
+- `[ ]` **V11: Automação "Me"** (Decretos de Enki).
+- `[ ]` **V12: Social Hub** (Mensagens diretas no Command Center).

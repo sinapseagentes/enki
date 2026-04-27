@@ -5,15 +5,21 @@ type Theme = "light" | "dark";
 interface ThemeContextData {
   theme: Theme;
   toggleTheme: () => void;
+  scribeMode: boolean;
+  toggleScribeMode: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextData>({} as ThemeContextData);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Padrão é light (conforme solicitado pelo usuário)
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem("@Enki:theme");
     return (saved as Theme) || "light";
+  });
+
+  const [scribeMode, setScribeMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem("@Enki:scribeMode");
+    return saved === "true";
   });
 
   useEffect(() => {
@@ -21,12 +27,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem("@Enki:theme", theme);
   }, [theme]);
 
+  useEffect(() => {
+    localStorage.setItem("@Enki:scribeMode", String(scribeMode));
+  }, [scribeMode]);
+
   const toggleTheme = () => {
     setTheme(prev => prev === "light" ? "dark" : "light");
   };
 
+  const toggleScribeMode = () => {
+    setScribeMode(prev => !prev);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, scribeMode, toggleScribeMode }}>
       {children}
     </ThemeContext.Provider>
   );

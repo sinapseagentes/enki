@@ -1,0 +1,68 @@
+# Planejamento: Trello-Like App
+
+Este é o plano de implementação para o aplicativo estilo Trello, focado em pequenas equipes (até 10 pessoas), com login social (Google/Gmail) e armazenamento gratuito no Firebase.
+
+O desenvolvimento seguirá o modelo SCRUM com foco inicial no MVP, utilizando as melhores práticas definidas nas regras (ACID, SOLID, MVVM, Swift, etc).
+
+## User Review Required
+
+> [!IMPORTANT]
+> Por favor, revise o plano de Backlog do MVP e a estrutura de dados proposta abaixo. Se estiver de acordo, procederei com a inicialização do projeto Xcode, a configuração do Firebase e o primeiro commit/tag do repositório.
+
+## Open Questions
+
+> [!NOTE]
+> 1. Você deseja que a interface do usuário seja construída primariamente com SwiftUI (recomendado para compartilhar código entre Mac, iPhone/iPad e Apple Watch) ou UIKit/AppKit?
+> 2. O projeto do Firebase já foi criado no console do Firebase ou devo guiar você sobre como criar e baixar o `GoogleService-Info.plist`?
+
+## Proposed Changes
+
+O projeto será estruturado utilizando a arquitetura **MVVM** e **EDP** (Event-Driven Programming), priorizando o suporte multiplataforma (iOS, macOS, watchOS).
+
+### 1. Inicialização do Projeto e Git
+- **[NEW]** Inicializar repositório Git (`git init`).
+- **[NEW]** Criar a estrutura base do projeto Swift usando o Xcode (suporte a iOS, macOS e watchOS).
+- **[NEW]** Configurar o `README.md` com a documentação básica e o padrão de versionamento (Vx.y.z.k).
+
+### 2. Backlog do Produto (MVP)
+
+Abaixo estão os backlogs e features numerados para a fase MVP:
+
+*   **Backlog 1: Autenticação e Usuário**
+    *   Feature 1.1: Integração com Firebase Auth.
+    *   Feature 1.2: Login Social com Google (Gmail).
+    *   Feature 1.3: Criação de perfil de usuário e sessão.
+*   **Backlog 2: Gestão de Quadros (Boards)**
+    *   Feature 2.1: Modelagem de dados do Board no Firestore.
+    *   Feature 2.2: Tela de listagem de quadros do usuário.
+    *   Feature 2.3: Criação de um novo quadro.
+*   **Backlog 3: Gestão de Listas e Cartões (Cards)**
+    *   Feature 3.1: Modelagem de Listas e Cartões.
+    *   Feature 3.2: Interface do quadro com listas horizontais.
+    *   Feature 3.3: Adicionar, editar e excluir cartões.
+    *   Feature 3.4: Arrastar e soltar (Drag and Drop) de cartões entre listas.
+*   **Backlog 4: Colaboração Básica**
+    *   Feature 4.1: Sistema de convite para o quadro (limitado a até 10 usuários por design).
+    *   Feature 4.2: Atualização em tempo real (Realtime) usando listeners do Firestore.
+
+### 3. Modelagem de Dados (Firebase Firestore)
+
+Para garantir escalabilidade no tier gratuito do Firebase e performance:
+- **Users**: Coleção de usuários autenticados.
+- **Boards**: Coleção de quadros. Cada quadro terá uma subcoleção de `Lists` e `Cards` ou armazenará referências, visando otimizar leituras.
+- **Permissions**: Estrutura de regras de segurança do Firestore (Security Rules) para garantir o *Secure by Design (SbD)*, restringindo o acesso apenas aos membros do quadro.
+
+### 4. Integração do Firebase
+- **[NEW]** `Podfile` ou `Package.swift` (SPM) para adicionar `Firebase/Auth`, `Firebase/Firestore` e `GoogleSignIn`.
+- **[NEW]** Camada de Serviços (`FirebaseService`, `AuthService`, `DatabaseService`) respeitando os princípios SOLID.
+
+## Verification Plan
+
+### Automated Tests
+- Criar testes unitários para os *ViewModels* e *Services* focando nas regras de negócio (criação de boards, parsing de dados).
+- Testes de UI automatizados para os fluxos principais (Login -> Lista de Boards -> Abrir Board).
+
+### Manual Verification
+- O usuário deverá rodar o projeto no Simulador do iPhone e no Mac para garantir o responsivo.
+- Testar o login social com conta Google real.
+- Validar a sincronização em tempo real abrindo o mesmo board em dois simuladores/dispositivos simultaneamente.

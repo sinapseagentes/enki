@@ -1,0 +1,73 @@
+# Planejamento: Trello-Like App (Cross-Platform)
+
+Este é o plano de implementação atualizado para o aplicativo estilo Trello, focado em pequenas equipes (até 10 pessoas), com login social (Google/Gmail) e armazenamento gratuito no Firebase. 
+
+O aplicativo deve rodar nativamente ou via navegador nas seguintes plataformas: **Chrome (Mobile e Desktop), macOS e Android**.
+
+O desenvolvimento seguirá o modelo SCRUM com foco inicial no MVP.
+
+## User Review Required
+
+> [!WARNING]
+> **Mudança de Tecnologia Necessária:** Suas regras globais mencionam "Swift" como a stack principal. No entanto, o Swift é exclusivo para o ecossistema Apple (macOS, iOS, WatchOS). Para que o app rode no **Chrome (Web)** e no **Android**, precisaremos alterar a tecnologia.
+
+> [!IMPORTANT]
+> Por favor, revise a sugestão de stack tecnológica abaixo e o plano de Backlog do MVP. Se aprovar, iniciarei a configuração do projeto.
+
+## Open Questions
+
+> [!NOTE]
+> 1. **Qual tecnologia devemos adotar?** Minha sugestão é usarmos **React com Vite (TypeScript/JavaScript)** construído como um PWA (Progressive Web App). Isso permite que ele rode perfeitamente no Chrome (Mobile/Desktop), possa ser instalado no Android e também no macOS como um app independente. Outra excelente opção cross-platform seria **Flutter**. Qual você prefere?
+> 2. O projeto do Firebase já foi criado no console do Firebase e está pronto para uso na web/Android, ou devemos começar essa configuração do zero?
+
+## Proposed Changes
+
+O projeto será estruturado utilizando a arquitetura focada em componentes e gerenciamento de estado global, priorizando responsividade e performance cross-platform.
+
+### 1. Inicialização do Projeto e Git
+- **[NEW]** Inicializar repositório Git (`git init`).
+- **[NEW]** Criar a estrutura base do projeto usando a tecnologia escolhida (ex: `npx create-vite` para React).
+- **[NEW]** Configurar o `README.md` com a documentação básica e o padrão de versionamento (Vx.y.z.k).
+
+### 2. Backlog do Produto (MVP)
+
+Abaixo estão os backlogs e features numerados para a fase MVP:
+
+*   **Backlog 1: Autenticação e Usuário**
+    *   Feature 1.1: Integração com Firebase Auth (Web/Cross-platform).
+    *   Feature 1.2: Login Social com Google (Gmail).
+    *   Feature 1.3: Criação de perfil de usuário e sessão segura.
+*   **Backlog 2: Gestão de Quadros (Boards)**
+    *   Feature 2.1: Modelagem de dados do Board no Firestore.
+    *   Feature 2.2: Tela de listagem de quadros do usuário (UI Responsiva).
+    *   Feature 2.3: Criação de um novo quadro.
+*   **Backlog 3: Gestão de Listas e Cartões (Cards)**
+    *   Feature 3.1: Modelagem de Listas e Cartões.
+    *   Feature 3.2: Interface do quadro com listas horizontais adaptáveis (Touch para mobile, Mouse para desktop).
+    *   Feature 3.3: Adicionar, editar e excluir cartões.
+    *   Feature 3.4: Arrastar e soltar (Drag and Drop) de cartões entre listas (suporte a Touch/Mouse).
+*   **Backlog 4: Colaboração Básica**
+    *   Feature 4.1: Sistema de convite para o quadro (limitado a até 10 usuários por design).
+    *   Feature 4.2: Atualização em tempo real (Realtime) usando listeners do Firestore.
+
+### 3. Modelagem de Dados (Firebase Firestore)
+
+Para garantir escalabilidade no tier gratuito do Firebase e performance:
+- **Users**: Coleção de usuários autenticados.
+- **Boards**: Coleção de quadros.
+- **Permissions**: Regras rigorosas do Firestore (Security Rules) para garantir o *Secure by Design (SbD)* e garantir que apenas usuários permitidos leiam/escrevam nos boards.
+
+### 4. Setup Inicial (Baseado na Escolha da Stack)
+- Configuração de bibliotecas de Drag and Drop.
+- Configuração de roteamento.
+- Implementação de Design System base (cores vibrantes, dark mode, design responsivo) focado em UI/UX Premium.
+
+## Verification Plan
+
+### Automated Tests
+- Testes unitários para regras de negócio e permissões do Firebase.
+
+### Manual Verification
+- Testar o comportamento responsivo redimensionando a janela no Chrome Desktop.
+- Emular dispositivos Android e iOS no Chrome DevTools para testar o touch e drag-and-drop.
+- Testar login e atualizações em tempo real abrindo em abas diferentes.

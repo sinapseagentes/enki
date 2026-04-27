@@ -1,0 +1,14 @@
+# Tasks: Ollert V5 - Experiência e Notificações
+
+- `[x]` **Stop 1: Sistema de Toast (Feedback Visual)**
+  - `[x]` `NotificationContext.tsx`: Gerenciamento de alertas.
+  - `[x]` Toasts embutidos com animações CSS.
+  - `[x]` Integrar toasts em ações (Save, Create, Archive, Restore).
+
+- `[ ]` **Stop 2: Alertas de Prazos (Due Date UX)**
+  - `[ ]` Lógica de cores para badges de data (Vencido/Próximo).
+  - `[ ]` Badge pulsante para itens que vencem hoje.
+
+- `[ ]` **Stop 3: UX Avançada**
+  - `[ ]` Micro-animações ao completar itens de checklist.
+  - `[ ]` Confirmações visuais de salvamento automático.

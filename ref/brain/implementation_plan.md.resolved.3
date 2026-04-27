@@ -1,0 +1,37 @@
+# Planejamento: Trello-Like App - Versão 3 (V3.0.0.0)
+
+## Proposed Changes
+
+### Stop 1 — Renomear Quadros, Listas e Cartões (Backlog 9)
+- **[MODIFY]** `Dashboard.tsx`: Clique duplo no título do quadro para edição inline.
+- **[MODIFY]** `ListContainer.tsx`: Clique no título da lista para editar inline.
+- **[MODIFY]** `CardModal.tsx`: O título já é editável no modal (já implementado ✅).
+- **[MODIFY]** `boardService.ts`: Adicionar `updateBoardTitle()`.
+- **[MODIFY]** `listService.ts`: Adicionar `updateListTitle()`.
+
+### Stop 2 — Datas de Entrega nos Cartões (Backlog 10)
+- **[MODIFY]** `types/index.ts`: Adicionar campo `dueDate?: number` (timestamp) ao Card.
+- **[MODIFY]** `CardModal.tsx`: Adicionar campo de data/hora com seletor nativo HTML.
+- **[MODIFY]** `CardItem.tsx`: Mostrar chip de data no cartão com cor vermelha se atrasado.
+
+### Stop 3 — Regras de Segurança do Firestore (Backlog 11)
+- Definir as regras completas de segurança no console do Firebase.
+- Apenas membros do quadro podem ler/escrever listas e cartões.
+- Apenas o dono pode excluir o quadro.
+- Qualquer usuário autenticado pode escrever na coleção `users` somente o seu próprio documento.
+
+### Stop 4 — Avatares dos Membros no Quadro (Backlog 12)
+- **[MODIFY]** `boardService.ts`: Buscar dados dos membros junto ao quadro.
+- **[MODIFY]** `Board.tsx`: Mostrar avatares dos membros na barra superior do quadro.
+
+### Stop 5 — Filtros por Etiqueta (Backlog 13)
+- **[MODIFY]** `Board.tsx`: Barra de filtro por cor de etiqueta. Cards que não correspondem ficam com opacidade reduzida.
+
+### Stop 6 — Arquivar ao invés de Deletar (Backlog 14)
+- **[MODIFY]** `types/index.ts`: Adicionar `archived?: boolean` a List e Card.
+- **[MODIFY]** `listService.ts` / `cardService.ts`: Adicionar funções `archiveList()` e `archiveCard()`.
+- **[MODIFY]** `ListContainer.tsx` / `CardItem.tsx`: Trocar "Excluir" por "Arquivar". Exclusão permanente só via modal de confirmação explícita.
+
+## Verification Plan
+Cada Stop será seguido de uma pausa para teste antes de prosseguir.
+Tags de versão: `V3.1.0.0`, `V3.2.0.0`, etc.

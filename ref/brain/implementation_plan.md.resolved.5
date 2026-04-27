@@ -1,0 +1,26 @@
+# Plano de Implementação - Ollert V5: Experiência e Notificações
+
+Este plano foca em tornar a aplicação mais viva e reativa, fornecendo feedbacks visuais claros e alertas de prazos.
+
+## User Review Required
+> [!IMPORTANT]
+> O sistema de notificações será inicialmente apenas local (na sessão do usuário). Para notificações push ou offline, seriam necessárias configurações adicionais de Service Worker e permissões de navegador.
+
+## Proposed Changes
+
+### [Component Name] Notification System
+Criaremos um sistema de mensagens flutuantes (Toasts) para feedback imediato de ações.
+
+#### [NEW] NotificationContext.tsx(file:///Users/darwin/Projetos/Trello/src/contexts/NotificationContext.tsx)
+#### [NEW] ToastContainer.tsx(file:///Users/darwin/Projetos/Trello/src/components/ToastContainer.tsx)
+
+### [Component Name] Due Date Engine
+Melhoria visual nos cartões para destacar prazos.
+
+#### [MODIFY] CardItem.tsx(file:///Users/darwin/Projetos/Trello/src/components/CardItem.tsx)
+- Lógica para calcular urgência da data e aplicar cores (Warning/Danger).
+
+## Verification Plan
+### Automated Tests
+- Simular datas passadas e futuras para verificar as cores dos badges.
+- Disparar múltiplos toasts para validar o empilhamento.
