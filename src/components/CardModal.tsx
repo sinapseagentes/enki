@@ -43,6 +43,8 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
   const [newComment, setNewComment] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionFilter, setMentionFilter] = useState("");
 
   // Close on Escape key
   useEffect(() => {
@@ -83,6 +85,32 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCommentChange = (text: string) => {
+    setNewComment(text);
+    
+    // Detect trigger '@'
+    const lastAtIdx = text.lastIndexOf("@");
+    if (lastAtIdx !== -1 && (lastAtIdx === 0 || text[lastAtIdx - 1] === " ")) {
+      const query = text.slice(lastAtIdx + 1);
+      // Only trigger if no space after @
+      if (!query.includes(" ")) {
+        setMentionFilter(query);
+        setShowMentions(true);
+      } else {
+        setShowMentions(false);
+      }
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  const selectMention = (name: string) => {
+    const lastAtIdx = newComment.lastIndexOf("@");
+    const prefix = newComment.slice(0, lastAtIdx);
+    setNewComment(prefix + "@" + name + " ");
+    setShowMentions(false);
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
@@ -433,17 +461,54 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-600 font-bold text-xs uppercase overflow-hidden">
                     {user?.photoURL ? <img src={user.photoURL} alt="" /> : user?.displayName?.charAt(0) || "?"}
                   </div>
-                  <div className="flex-1 space-y-2">
+                  <div className="flex-1 relative">
                     <textarea
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Escreva um comentário..."
+                      onChange={(e) => handleCommentChange(e.target.value)}
+                      placeholder="Escreva um comentário (use @ para mencionar)..."
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none min-h-[80px]"
                     />
+                    
+                    {showMentions && boardMembers && (
+                      <div className="absolute bottom-full left-0 mb-1 w-64 bg-white rounded-lg shadow-xl border border-gray-100 z-10 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
+                        <div className="p-2 bg-gray-50 border-b border-gray-100">
+                          <span className="text-[10px] font-bold text-gray-500 uppercase">Mencionar membro</span>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {boardMembers
+                            .filter(m => 
+                              m.displayName?.toLowerCase().includes(mentionFilter.toLowerCase()) || 
+                              m.email?.toLowerCase().includes(mentionFilter.toLowerCase())
+                            )
+                            .map(m => (
+                              <div
+                                key={m.uid}
+                                onClick={() => selectMention(m.displayName || "Usuário")}
+                                className="flex items-center gap-2 p-2 hover:bg-blue-50 cursor-pointer transition-colors"
+                              >
+                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 uppercase overflow-hidden">
+                                  {m.photoURL ? <img src={m.photoURL} alt="" /> : m.displayName?.charAt(0)}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-bold text-gray-800">{m.displayName}</span>
+                                  <span className="text-[9px] text-gray-400">{m.email}</span>
+                                </div>
+                              </div>
+                            ))}
+                          {boardMembers.filter(m => 
+                              m.displayName?.toLowerCase().includes(mentionFilter.toLowerCase()) || 
+                              m.email?.toLowerCase().includes(mentionFilter.toLowerCase())
+                            ).length === 0 && (
+                            <div className="p-4 text-center text-xs text-gray-400 italic">Nenhum membro encontrado</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <button
                       type="submit"
                       disabled={!newComment.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-2 rounded-md font-semibold disabled:opacity-50 transition-colors"
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-2 rounded-md font-semibold disabled:opacity-50 transition-colors mt-2"
                     >
                       Comentar
                     </button>
