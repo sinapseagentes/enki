@@ -140,16 +140,12 @@ export const BoardPage = () => {
       const sourceListId = source.droppableId;
       const destinationListId = destination.droppableId;
 
-      const newCards = Array.from(cards);
-      const movedCardIndex = newCards.findIndex(c => c.id === draggableId);
-      const movedCard = newCards[movedCardIndex];
-
       if (sourceListId === destinationListId) {
-        const listCards = newCards.filter(c => c.listId === sourceListId).sort((a,b) => a.order - b.order);
-        listCards.splice(source.index, 1);
+        const listCards = cards.filter(c => c.listId === sourceListId).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
+        const [movedCard] = listCards.splice(source.index, 1);
         listCards.splice(destination.index, 0, movedCard);
         
-        const updatedCards = newCards.map(c => {
+        const updatedCards = cards.map(c => {
           if (c.listId === sourceListId) {
             const newIndex = listCards.findIndex(lc => lc.id === c.id);
             if (newIndex !== -1) return { ...c, order: newIndex };
@@ -166,15 +162,15 @@ export const BoardPage = () => {
           console.error("Error updating cards order:", error);
         }
       } else {
-        movedCard.listId = destinationListId;
+        const sourceListCards = cards.filter(c => c.listId === sourceListId).sort((a,b) => a.order - b.order);
+        const destListCards = cards.filter(c => c.listId === destinationListId).sort((a,b) => a.order - b.order);
         
-        const sourceListCards = newCards.filter(c => c.listId === sourceListId && c.id !== draggableId).sort((a,b) => a.order - b.order);
-        const destListCards = newCards.filter(c => c.listId === destinationListId).sort((a,b) => a.order - b.order);
+        const [movedCard] = sourceListCards.splice(source.index, 1);
+        const updatedMovedCard = { ...movedCard, listId: destinationListId, order: destination.index };
+        destListCards.splice(destination.index, 0, updatedMovedCard);
         
-        destListCards.splice(destination.index, 0, movedCard);
-        
-        const updatedCards = newCards.map(c => {
-          if (c.id === movedCard.id) return { ...c, listId: destinationListId, order: destination.index };
+        const updatedCards = cards.map(c => {
+          if (c.id === draggableId) return updatedMovedCard;
           if (c.listId === sourceListId) {
             const newIndex = sourceListCards.findIndex(lc => lc.id === c.id);
             if (newIndex !== -1) return { ...c, order: newIndex };
