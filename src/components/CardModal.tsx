@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Card, ChecklistItem, Comment, Attachment, Board, UserProfile } from "../types";
 import { updateCard } from "../services/cardService";
-import { addComment, subscribeToComments } from "../services/commentService";
+import { addComment, subscribeToComments, updateComment, deleteComment } from "../services/commentService";
 import { uploadFile } from "../services/storageService";
 import { logActivity } from "../services/activityService";
 import { sendNotification } from "../services/notificationService";
@@ -45,6 +45,8 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
   const [isUploading, setIsUploading] = useState(false);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
 
   // Close on Escape key
   useEffect(() => {
@@ -177,6 +179,30 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
       setNewComment("");
     } catch (error) {
       console.error("Erro ao adicionar comentário:", error);
+    }
+  };
+
+  const handleUpdateComment = async (id: string) => {
+    if (!editingCommentText.trim()) return;
+    try {
+      await updateComment(id, editingCommentText.trim());
+      setEditingCommentId(null);
+      showNotification("Comentário atualizado!");
+    } catch (error) {
+      console.error("Erro ao editar comentário:", error);
+      showNotification("Falha ao editar comentário.", "error");
+    }
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este comentário?")) {
+      try {
+        await deleteComment(id);
+        showNotification("Comentário excluído.");
+      } catch (error) {
+        console.error("Erro ao excluir comentário:", error);
+        showNotification("Falha ao excluir comentário.", "error");
+      }
     }
   };
 
@@ -517,16 +543,65 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
 
                 <div className="space-y-4">
                   {comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-3">
+                    <div key={comment.id} className="flex gap-3 group">
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-600 font-bold text-xs uppercase overflow-hidden">
                         {comment.userPhoto ? <img src={comment.userPhoto} alt="" /> : comment.userName.charAt(0)}
                       </div>
-                      <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                      <div className="flex-1 bg-gray-50 rounded-lg p-3 relative">
                         <div className="flex justify-between items-baseline mb-1">
                           <span className="font-bold text-sm text-gray-800">{comment.userName}</span>
                           <span className="text-[10px] text-gray-400">{formatCommentDate(comment.createdAt)}</span>
                         </div>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.text}</p>
+                        
+                        {editingCommentId === comment.id ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={editingCommentText}
+                              onChange={(e) => setEditingCommentText(e.target.value)}
+                              className="w-full p-2 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              autoFocus
+                            />
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => handleUpdateComment(comment.id!)}
+                                className="text-[10px] bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                              >
+                                Salvar
+                              </button>
+                              <button 
+                                onClick={() => setEditingCommentId(null)}
+                                className="text-[10px] bg-gray-200 text-gray-600 px-2 py-1 rounded hover:bg-gray-300"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.text}</p>
+                            {user?.uid === comment.userId && (
+                              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button 
+                                  onClick={() => {
+                                    setEditingCommentId(comment.id!);
+                                    setEditingCommentText(comment.text);
+                                  }}
+                                  className="text-xs text-gray-400 hover:text-blue-600"
+                                  title="Editar"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteComment(comment.id!)}
+                                  className="text-xs text-gray-400 hover:text-red-600"
+                                  title="Excluir"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}

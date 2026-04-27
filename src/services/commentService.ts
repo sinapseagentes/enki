@@ -4,7 +4,10 @@ import {
   query, 
   where, 
   orderBy, 
-  onSnapshot 
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  doc
 } from "firebase/firestore";
 import type { QuerySnapshot, DocumentData } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -33,4 +36,14 @@ export const subscribeToComments = (cardId: string, callback: (comments: Comment
     })) as Comment[];
     callback(comments);
   });
+};
+
+export const updateComment = async (id: string, text: string) => {
+  const docRef = doc(db, COMMENTS_COLLECTION, id);
+  return updateDoc(docRef, { text });
+};
+
+export const deleteComment = async (id: string) => {
+  const docRef = doc(db, COMMENTS_COLLECTION, id);
+  return deleteDoc(docRef);
 };
