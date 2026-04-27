@@ -78,7 +78,8 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
           }`}
           style={{
             ...provided.draggableProps.style,
-            transition: snapshot.isDragging ? 'none' : provided.draggableProps.style?.transition
+            transition: snapshot.isDragging ? 'none' : provided.draggableProps.style?.transition,
+            animation: snapshot.isDragging ? 'none' : undefined
           }}
         >
           {/* List Header (Drag Handle) */}

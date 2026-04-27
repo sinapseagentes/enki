@@ -55,15 +55,18 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
           {...provided.dragHandleProps}
           onClick={onClick}
           className={`group rounded shadow-sm border mb-2 cursor-grab active:cursor-grabbing relative overflow-hidden ${
-            snapshot.isDragging ? "z-[1000] shadow-2xl scale-[1.02] ring-2 ring-blue-500/50" : "transition-all hover-lift active-shrink"
+            snapshot.isDragging 
+              ? "z-[1000] shadow-2xl scale-[1.02] ring-2 ring-blue-500/50 bg-theme-card opacity-100 blur-none" 
+              : `transition-all hover-lift active-shrink ${card.isFilteredOut ? "opacity-10 scale-95 pointer-events-none blur-[1px]" : "opacity-100"}`
           } ${
-            card.archived ? "bg-theme-surface/50 border-theme opacity-75 grayscale" : "bg-theme-card border-theme"
-          } ${
-            card.isFilteredOut ? "opacity-10 scale-95 pointer-events-none blur-[1px]" : "opacity-100"
+            card.archived ? "bg-theme-surface/50 border-theme grayscale" : "bg-theme-card border-theme"
           }`}
           style={{
             ...provided.draggableProps.style,
-            transition: snapshot.isDragging ? 'none' : provided.draggableProps.style?.transition
+            transition: snapshot.isDragging ? 'none' : provided.draggableProps.style?.transition,
+            // Forçar opacidade e blur para ignorar classes condicionais durante o drag
+            opacity: snapshot.isDragging ? 1 : undefined,
+            filter: snapshot.isDragging ? 'none' : undefined
           }}
         >
           {card.colorLabel && !card.coverUrl && (
