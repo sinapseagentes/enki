@@ -302,7 +302,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
       {/* Click outside to close */}
       <div className="absolute inset-0" onClick={onClose}></div>
 
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
+      <div className="relative bg-theme-card rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col border border-theme">
         {/* Card Cover */}
         {coverUrl ? (
           <div className="relative h-48 w-full group">
@@ -329,14 +329,14 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-2xl font-bold text-gray-800 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
+                className="text-2xl font-bold text-theme-main w-full bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
                 placeholder="Título do Cartão"
               />
               <p className="text-sm text-gray-500 ml-1 mt-1">Na lista atual</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors absolute top-4 right-4"
+              className="text-theme-secondary hover:text-theme-main bg-theme-surface hover:bg-theme-card/80 rounded-full p-2 transition-colors absolute top-4 right-4"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -346,7 +346,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
             {/* Main Content */}
             <div className="flex-1 space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-theme-main mb-2 flex items-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
                   Descrição
                 </h3>
@@ -354,7 +354,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Adicione uma descrição mais detalhada..."
-                  className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+                  className="w-full h-32 px-3 py-2 bg-theme-surface text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
                 />
               </div>
 
@@ -547,10 +547,10 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-600 font-bold text-xs uppercase overflow-hidden">
                         {comment.userPhoto ? <img src={comment.userPhoto} alt="" /> : comment.userName.charAt(0)}
                       </div>
-                      <div className="flex-1 bg-gray-50 rounded-lg p-3 relative">
+                      <div className="flex-1 bg-theme-surface rounded-lg p-3 relative border border-theme">
                         <div className="flex justify-between items-baseline mb-1">
-                          <span className="font-bold text-sm text-gray-800">{comment.userName}</span>
-                          <span className="text-[10px] text-gray-400">{formatCommentDate(comment.createdAt)}</span>
+                          <span className="font-bold text-sm text-theme-main">{comment.userName}</span>
+                          <span className="text-[10px] text-theme-secondary">{formatCommentDate(comment.createdAt)}</span>
                         </div>
                         
                         {editingCommentId === comment.id ? (
@@ -578,7 +578,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                           </div>
                         ) : (
                           <>
-                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.text}</p>
+                            <p className="text-sm text-theme-main whitespace-pre-wrap">{comment.text}</p>
                             {user?.uid === comment.userId && (
                               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button 

@@ -224,8 +224,8 @@ export const BoardPage = () => {
   }, [lists, cards]);
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex flex-col">
-      <nav className="bg-black/20 backdrop-blur-sm px-4 py-3 flex justify-between items-center text-white shrink-0 border-b border-white/10">
+    <div className={`h-screen flex flex-col transition-colors duration-300 ${theme === 'dark' ? 'bg-theme-page' : 'bg-gradient-to-br from-blue-600 to-blue-800'}`}>
+      <nav className={`${theme === 'dark' ? 'bg-slate-900/50' : 'bg-black/20'} backdrop-blur-md px-4 py-3 flex justify-between items-center text-white shrink-0 border-b border-white/10`}>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate("/")}

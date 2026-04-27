@@ -6,50 +6,44 @@
 }
 
 :root {
-  /* Light Theme (Default) */
+  /* Light Theme (Default) - Mais suave e legível */
   --bg-page: #f8fafc;
   --bg-card: #ffffff;
   --bg-surface: #f1f5f9;
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --border-main: #e2e8f0;
+  --text-main: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
   --shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --header-bg: rgba(0, 121, 191, 0.9);
 }
 
 [data-theme="dark"] {
-  /* Premium Dark Theme */
+  /* Dark Theme - Cores Slate/Zinc Premium */
   --bg-page: #0f172a;
   --bg-card: #1e293b;
   --bg-surface: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --border-main: #334155;
-  --shadow-premium: 0 10px 15px -3px rgb(0 0 0 / 0.3);
-  --header-bg: rgba(15, 23, 42, 0.9);
+  --text-main: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --shadow-premium: 0 10px 15px -3px rgb(0 0 0 / 0.5);
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', sans-serif;
   background-color: var(--bg-page);
-  color: var(--text-primary);
+  color: var(--text-main);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Utilitários globais para temas */
-.theme-card {
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border-main);
-  box-shadow: var(--shadow-premium);
-}
+/* Classes utilitárias que respeitam o tema */
+.bg-theme-page { background-color: var(--bg-page); }
+.bg-theme-card { background-color: var(--bg-card); }
+.bg-theme-surface { background-color: var(--bg-surface); }
+.text-theme-main { color: var(--text-main); }
+.text-theme-secondary { color: var(--text-secondary); }
+.border-theme { border-color: var(--border-color); }
 
-.theme-text-secondary {
-  color: var(--text-secondary);
-}
-
-/* Animações Premium */
+/* Animações */
 @keyframes pulse-slow {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.8; transform: scale(0.98); }

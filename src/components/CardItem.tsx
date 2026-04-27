@@ -15,10 +15,10 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
   const isToday = card.dueDate ? new Date(card.dueDate).toDateString() === new Date().toDateString() : false;
 
   const getDueDateBadgeClass = () => {
-    if (isCompleted) return "bg-green-100 text-green-700";
-    if (isOverdue) return "bg-red-100 text-red-700 animate-pulse";
-    if (isDueSoon) return "bg-orange-100 text-orange-700";
-    return "bg-gray-100 text-gray-600";
+    if (isCompleted) return "bg-green-500/20 text-green-600";
+    if (isOverdue) return "bg-red-500/20 text-red-600 animate-pulse";
+    if (isDueSoon) return "bg-orange-500/20 text-orange-600";
+    return "bg-theme-surface text-theme-secondary";
   };
 
   const handleArchive = async (e: React.MouseEvent) => {
@@ -55,7 +55,7 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
           {...provided.dragHandleProps}
           onClick={onClick}
           className={`group rounded shadow-sm border mb-2 cursor-grab active:cursor-grabbing transition-all relative overflow-hidden ${
-            card.archived ? "bg-gray-200 border-gray-300 opacity-75 grayscale" : "bg-white border-gray-200 hover:bg-gray-50"
+            card.archived ? "bg-theme-surface/50 border-theme opacity-75 grayscale" : "bg-theme-card border-theme hover:bg-theme-surface/30"
           } ${snapshot.isDragging ? "shadow-lg rotate-2 scale-105" : ""}`}
         >
           {card.colorLabel && !card.coverUrl && (
@@ -65,7 +65,7 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
             <img src={card.coverUrl} alt="" className="w-full h-32 object-cover border-b" />
           )}
           <div className="p-3">
-            <p className="text-sm text-gray-800 break-words pr-6">{card.title}</p>
+            <p className="text-sm text-theme-main break-words pr-6">{card.title}</p>
 
             {/* Badges: description icon + due date + attachments */}
             {(card.description || card.dueDate || (card.attachments && card.attachments.length > 0)) && (
@@ -91,7 +91,7 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
                 )}
                 {card.checklists && card.checklists.length > 0 && (
                   <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-bold ${
-                    isCompleted ? "bg-green-600 text-white" : "bg-gray-100 text-gray-600"
+                    isCompleted ? "bg-green-600 text-white" : "bg-theme-surface text-theme-secondary"
                   }`}>
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
                     {card.checklists.filter(i => i.completed).length}/{card.checklists.length}

@@ -189,7 +189,7 @@ export const Dashboard = () => {
   const visibleBoards = boards.filter(b => showArchived || !b.archived);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-theme-page transition-colors duration-300">
       <nav className="bg-blue-600 px-4 py-3 shadow-md flex justify-between items-center text-white">
         <div className="flex items-center gap-2">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -225,7 +225,7 @@ export const Dashboard = () => {
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Seus Quadros</h1>
+          <h1 className="text-3xl font-bold text-theme-main">Seus Quadros</h1>
           <button 
             onClick={() => setShowArchived(!showArchived)}
             className={`text-sm px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
@@ -242,16 +242,16 @@ export const Dashboard = () => {
           {!isCreating && !showArchived && (
             <div 
               onClick={() => setIsCreating(true)}
-              className="bg-gray-200/50 hover:bg-gray-200 rounded-lg h-32 flex items-center justify-center cursor-pointer transition-colors border-2 border-dashed border-gray-300"
+              className="bg-theme-card/50 hover:bg-theme-card rounded-lg h-32 flex items-center justify-center cursor-pointer transition-colors border-2 border-dashed border-theme"
             >
-              <span className="text-gray-600 font-medium flex items-center gap-2">
+              <span className="text-theme-secondary font-medium flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 Criar novo quadro
               </span>
             </div>
           )}
           {isCreating && !showArchived && (
-            <div className="bg-white p-4 rounded-lg shadow-md h-32 border border-gray-200 flex flex-col justify-between">
+            <div className="bg-theme-card p-4 rounded-lg shadow-md h-32 border border-theme flex flex-col justify-between">
               <form onSubmit={handleCreateBoard} className="flex flex-col h-full justify-between">
                 <input 
                   type="text" 

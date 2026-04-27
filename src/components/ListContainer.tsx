@@ -73,14 +73,14 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className={`bg-gray-100 w-72 rounded-lg flex flex-col flex-shrink-0 max-h-full ${
+          className={`bg-theme-surface w-72 rounded-lg flex flex-col flex-shrink-0 max-h-full border border-theme transition-colors ${
             snapshot.isDragging ? "shadow-2xl opacity-80" : "shadow-sm"
           }`}
         >
           {/* List Header (Drag Handle) */}
           <div
             {...(!isEditingTitle ? provided.dragHandleProps : {})}
-            className={`p-3 font-semibold text-gray-800 flex justify-between items-center group rounded-t-lg ${list.archived ? "bg-gray-300" : ""}`}
+            className={`p-3 font-semibold text-theme-main flex justify-between items-center group rounded-t-lg ${list.archived ? "opacity-50" : ""}`}
           >
             {isEditingTitle ? (
               <input
@@ -94,7 +94,7 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
               />
             ) : (
               <h2
-                className="text-sm cursor-pointer hover:bg-gray-200 rounded px-1 py-0.5 w-full truncate"
+                className="text-sm cursor-pointer hover:bg-theme-card/50 rounded px-1 py-0.5 w-full truncate"
                 onClick={startEditTitle}
                 title="Clique para renomear"
               >
@@ -131,7 +131,7 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
                 ref={provided.innerRef}
                 {...provided.droppableProps}
                 className={`px-2 py-1 flex-1 overflow-y-auto min-h-[10px] ${
-                  snapshot.isDraggingOver ? "bg-blue-50/50" : ""
+                  snapshot.isDraggingOver ? "bg-blue-500/10" : ""
                 }`}
               >
                 {cards.map((card, cardIndex) => (
@@ -147,7 +147,7 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
             {!isAddingCard ? (
               <button
                 onClick={() => setIsAddingCard(true)}
-                className="w-full text-left px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-200 hover:text-gray-800 rounded transition-colors flex items-center gap-1"
+                className="w-full text-left px-2 py-1.5 text-sm text-theme-secondary hover:bg-theme-card hover:text-theme-main rounded transition-colors flex items-center gap-1"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 Adicionar um cartão
