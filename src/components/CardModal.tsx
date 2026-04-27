@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import type { Card, ChecklistItem, Comment, Attachment, Board, UserProfile } from "../types";
-import { updateCard } from "../services/cardService";
+import type { Card, ChecklistItem, Comment, Attachment, Board, UserProfile, List } from "../types";
+import { updateCard, moveCard, copyCard } from "../services/cardService";
 import { addComment, subscribeToComments, updateComment, deleteComment } from "../services/commentService";
 import { uploadFile } from "../services/storageService";
 import { logActivity } from "../services/activityService";
 import { sendNotification } from "../services/notificationService";
+import { getBoards } from "../services/boardService";
+import { subscribeToLists } from "../services/listService";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext";
 import confetti from "canvas-confetti";
@@ -47,6 +49,14 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
   const [mentionFilter, setMentionFilter] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  
+  // V9 Move/Copy States
+  const [showMoveUI, setShowMoveUI] = useState(false);
+  const [showCopyUI, setShowCopyUI] = useState(false);
+  const [availableBoards, setAvailableBoards] = useState<Board[]>([]);
+  const [targetBoardId, setTargetBoardId] = useState(card.boardId);
+  const [targetListId, setTargetListId] = useState(card.listId);
+  const [availableLists, setAvailableLists] = useState<List[]>([]);
 
   // Close on Escape key
   useEffect(() => {
@@ -65,6 +75,25 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
     });
     return () => unsubscribe();
   }, [card.id]);
+
+  // V9: Fetch boards for move/copy
+  useEffect(() => {
+    if (showMoveUI || showCopyUI) {
+      getBoards().then(setAvailableBoards);
+    }
+  }, [showMoveUI, showCopyUI]);
+
+  // V9: Fetch lists when board selection changes
+  useEffect(() => {
+    if (!targetBoardId) return;
+    const unsubscribe = subscribeToLists(targetBoardId, (lists) => {
+      setAvailableLists(lists);
+      if (lists.length > 0 && !lists.find(l => l.id === targetListId)) {
+        setTargetListId(lists[0].id!);
+      }
+    });
+    return () => unsubscribe();
+  }, [targetBoardId]);
 
   const handleSave = async () => {
     if (!title.trim()) return;
@@ -295,6 +324,35 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
     if (diff < 60000) return "agora mesmo";
     if (diff < 3600000) return `${Math.floor(diff / 60000)} min atrás`;
     return new Date(timestamp).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleMove = async () => {
+    if (!card.id) return;
+    setIsSaving(true);
+    try {
+      await moveCard(card.id, targetBoardId, targetListId);
+      showNotification("Cartão movido com sucesso!");
+      onClose();
+    } catch (error) {
+      console.error("Erro ao mover:", error);
+      showNotification("Falha ao mover cartão.", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    setIsSaving(true);
+    try {
+      await copyCard(card, targetBoardId, targetListId);
+      showNotification("Cartão copiado com sucesso!");
+      onClose();
+    } catch (error) {
+      console.error("Erro ao copiar:", error);
+      showNotification("Falha ao copiar cartão.", "error");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -646,11 +704,76 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                 )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Ações</h4>
+                
+                {/* Move Action */}
+                {!showMoveUI && !showCopyUI ? (
+                  <>
+                    <button 
+                      onClick={() => setShowMoveUI(true)}
+                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold py-2 px-4 rounded flex items-center gap-2 transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                      Mover
+                    </button>
+                    <button 
+                      onClick={() => setShowCopyUI(true)}
+                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold py-2 px-4 rounded flex items-center gap-2 transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                      Copiar
+                    </button>
+                  </>
+                ) : (
+                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3 animate-in slide-in-from-right-2 duration-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-gray-600">{showMoveUI ? "Mover para..." : "Copiar para..."}</span>
+                      <button onClick={() => { setShowMoveUI(false); setShowCopyUI(false); }} className="text-gray-400 hover:text-gray-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                    
+                    <div>
+                      <label className="text-[10px] text-gray-400 font-bold uppercase">Quadro</label>
+                      <select 
+                        value={targetBoardId}
+                        onChange={(e) => setTargetBoardId(e.target.value)}
+                        className="w-full text-xs border border-gray-300 rounded p-1 bg-white"
+                      >
+                        {availableBoards.map(b => (
+                          <option key={b.id} value={b.id}>{b.title}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-gray-400 font-bold uppercase">Lista</label>
+                      <select 
+                        value={targetListId}
+                        onChange={(e) => setTargetListId(e.target.value)}
+                        className="w-full text-xs border border-gray-300 rounded p-1 bg-white"
+                      >
+                        {availableLists.map(l => (
+                          <option key={l.id} value={l.id}>{l.title}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <button 
+                      onClick={showMoveUI ? handleMove : handleCopy}
+                      disabled={isSaving}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded shadow-sm transition-all"
+                    >
+                      {isSaving ? "Processando..." : (showMoveUI ? "Confirmar Movimentação" : "Confirmar Cópia")}
+                    </button>
+                  </div>
+                )}
+
                 <button
                   onClick={handleSave}
                   disabled={isSaving || !title.trim()}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow-sm disabled:opacity-50 transition-colors"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow-sm disabled:opacity-50 transition-colors mt-4"
                 >
                   {isSaving ? "Salvando..." : "Salvar Cartão"}
                 </button>

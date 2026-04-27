@@ -101,3 +101,12 @@ export const inviteUserToBoard = async (boardId: string, email: string) => {
 
   return uid;
 };
+
+export const getBoards = async (userId?: string) => {
+  const q = userId 
+    ? query(collection(db, BOARDS_COLLECTION), where("members", "array-contains", userId))
+    : collection(db, BOARDS_COLLECTION);
+  
+  const snapshot = await getDocs(q as any);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as object) } as Board));
+};

@@ -58,3 +58,34 @@ export const deleteCard = async (cardId: string) => {
   const cardRef = doc(db, CARDS_COLLECTION, cardId);
   await deleteDoc(cardRef);
 };
+
+/**
+ * Move um cartão para um novo quadro e/ou nova lista
+ */
+export const moveCard = async (cardId: string, targetBoardId: string, targetListId: string, newOrder: number = 0) => {
+  const cardRef = doc(db, CARDS_COLLECTION, cardId);
+  await updateDoc(cardRef, {
+    boardId: targetBoardId,
+    listId: targetListId,
+    order: newOrder
+  });
+};
+
+/**
+ * Cria uma cópia de um cartão em um destino específico
+ */
+export const copyCard = async (card: Card, targetBoardId: string, targetListId: string, newOrder: number = 0) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id, ...cardData } = card;
+  const newCard = {
+    ...cardData,
+    boardId: targetBoardId,
+    listId: targetListId,
+    order: newOrder,
+    createdAt: Date.now(),
+    title: `${card.title} (Cópia)`
+  };
+
+  const docRef = await addDoc(collection(db, CARDS_COLLECTION), newCard);
+  return docRef.id;
+};
