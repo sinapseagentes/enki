@@ -1,5 +1,5 @@
 export const COLORS = [
-  { name: "Azul Ollert", value: "#0079bf" },
+  { name: "Azul Enki", value: "#0079bf" },
   { name: "Verde", value: "#4ade80" },
   { name: "Laranja", value: "#fb923c" },
   { name: "Vermelho", value: "#f87171" },

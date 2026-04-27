@@ -152,7 +152,7 @@ export const CommandCenter = ({ boardId, initialTab = "activities", onClose }: C
 
         {/* Footer Info */}
         <div className="p-4 bg-gray-50 border-t border-gray-100">
-          <p className="text-[10px] text-gray-400 text-center font-medium">Ollert Premium v0.8.0.0</p>
+          <p className="text-[10px] text-gray-400 text-center font-medium uppercase tracking-widest">Enki Premium v0.8.0.0</p>
         </div>
       </div>
     </>

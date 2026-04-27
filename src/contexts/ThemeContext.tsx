@@ -12,13 +12,13 @@ const ThemeContext = createContext<ThemeContextData>({} as ThemeContextData);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Padrão é light (conforme solicitado pelo usuário)
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem("@Ollert:theme");
+    const saved = localStorage.getItem("@Enki:theme");
     return (saved as Theme) || "light";
   });
 
   useEffect(() => {
     document.body.setAttribute("data-theme", theme);
-    localStorage.setItem("@Ollert:theme", theme);
+    localStorage.setItem("@Enki:theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
