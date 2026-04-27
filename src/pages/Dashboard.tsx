@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { NotificationBell } from "../components/NotificationBell";
 import { createBoard, subscribeToBoards, archiveBoard, restoreBoard, updateBoardTitle } from "../services/boardService";
 import { subscribeToLists } from "../services/listService";
@@ -132,6 +133,7 @@ const BoardCard = ({ board, onArchive, onRestore }: {
 export const Dashboard = () => {
   const { user, logout } = useAuth();
   const { showNotification } = useNotification();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [boards, setBoards] = useState<Board[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -196,6 +198,17 @@ export const Dashboard = () => {
           <span className="text-xl font-bold tracking-wide">Ollert</span>
         </div>
         <div className="flex items-center gap-4">
+          <button 
+            onClick={toggleTheme}
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+            title={theme === "light" ? "Mudar para Dark Mode" : "Mudar para Light Mode"}
+          >
+            {theme === "light" ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 18v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            )}
+          </button>
           <NotificationBell />
           <span className="text-sm font-medium hidden sm:block">{user?.displayName}</span>
           {user?.photoURL && (
@@ -212,7 +225,7 @@ export const Dashboard = () => {
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Seus Quadros</h1>
+          <h1 className="text-3xl font-bold">Seus Quadros</h1>
           <button 
             onClick={() => setShowArchived(!showArchived)}
             className={`text-sm px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
