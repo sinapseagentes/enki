@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
-import { subscribeToLists, createList } from "../services/listService";
-import { subscribeToCards, createCard } from "../services/cardService";
+import { subscribeToLists, createList, updateListOrder } from "../services/listService";
+import { subscribeToCards, createCard, updateCard } from "../services/cardService";
 import { subscribeToBoard, getMembersProfile, updateBoardBackground } from "../services/boardService";
 import { logActivity } from "../services/activityService";
 import { useAuth } from "../contexts/AuthContext";
@@ -115,122 +115,101 @@ export const BoardPage = () => {
   };
 
   const onDragEnd = useCallback(async (result: DropResult) => {
-    const { destination, source, draggableId, type } = result;
+    const { destination, source, type } = result;
 
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    // Usar writeBatch do Firestore para evitar disparar múltiplos snapshots
-    const { writeBatch, doc } = await import("firebase/firestore");
-    const { db } = await import("../lib/firebase");
-    const batch = writeBatch(db);
-
+    // --- REORDENAR LISTAS ---
     if (type === "list") {
-      const newLists = [...lists].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      const [movedList] = newLists.splice(source.index, 1);
-      newLists.splice(destination.index, 0, movedList);
+      const reorderedLists = Array.from(lists);
+      const [removed] = reorderedLists.splice(source.index, 1);
+      reorderedLists.splice(destination.index, 0, removed);
       
-      // Update local state optimistically
-      setLists(newLists.map((l, i) => ({ ...l, order: i })));
+      // Atualização otimista
+      setLists(reorderedLists);
 
       try {
-        newLists.forEach((list, index) => {
-          const listRef = doc(db, "lists", list.id!);
-          batch.update(listRef, { order: index });
-        });
-        await batch.commit();
+        await Promise.all(
+          reorderedLists.map((list, index) => updateListOrder(list.id!, index))
+        );
       } catch (error) {
-        console.error("Error updating lists batch:", error);
+        console.error("Erro ao ordenar listas:", error);
       }
       return;
     }
 
+    // --- REORDENAR CARTÕES ---
     if (type === "card") {
       const sourceListId = source.droppableId;
-      const destinationListId = destination.droppableId;
+      const destListId = destination.droppableId;
 
-      if (sourceListId === destinationListId) {
-        const listCards = cards
-          .filter(c => c.listId === sourceListId)
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const sourceCards = cards.filter(c => c.listId === sourceListId).sort((a, b) => a.order - b.order);
+      const destCards = sourceListId === destListId 
+        ? sourceCards 
+        : cards.filter(c => c.listId === destListId).sort((a, b) => a.order - b.order);
+
+      const [movedCard] = sourceCards.splice(source.index, 1);
+      
+      if (sourceListId === destListId) {
+        sourceCards.splice(destination.index, 0, movedCard);
         
-        const [movedCard] = listCards.splice(source.index, 1);
-        listCards.splice(destination.index, 0, movedCard);
-        
-        // Optimistic update
-        const updatedCards = cards.map(c => {
+        // Atualização otimista
+        const updatedLocalCards = cards.map(c => {
           if (c.listId === sourceListId) {
-            const newIndex = listCards.findIndex(lc => lc.id === c.id);
-            if (newIndex !== -1) return { ...c, order: newIndex };
+            const newIdx = sourceCards.findIndex(sc => sc.id === c.id);
+            return { ...c, order: newIdx };
           }
           return c;
         });
-        setCards(updatedCards);
+        setCards(updatedLocalCards);
 
         try {
-          listCards.forEach((c, idx) => {
-            const cardRef = doc(db, "cards", c.id!);
-            batch.update(cardRef, { order: idx });
-          });
-          await batch.commit();
+          const updates = sourceCards.map((c, idx) => updateCard(c.id!, { order: idx }));
+          await Promise.all(updates);
         } catch (error) {
-          console.error("Error updating cards batch:", error);
+          console.error("Erro ao ordenar cartões:", error);
         }
       } else {
-        const sourceListCards = cards
-          .filter(c => c.listId === sourceListId)
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-        const destListCards = cards
-          .filter(c => c.listId === destinationListId)
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        destCards.splice(destination.index, 0, movedCard);
         
-        const [movedCard] = sourceListCards.splice(source.index, 1);
-        const updatedMovedCard = { ...movedCard, listId: destinationListId };
-        destListCards.splice(destination.index, 0, updatedMovedCard);
-        
-        // Optimistic update
-        const updatedCards = cards.map(c => {
-          if (c.id === draggableId) return { ...updatedMovedCard, order: destination.index };
+        // Atualização otimista
+        const updatedLocalCards = cards.map(c => {
+          if (c.id === movedCard.id) return { ...c, listId: destListId, order: destination.index };
           if (c.listId === sourceListId) {
-            const newIndex = sourceListCards.findIndex(lc => lc.id === c.id);
-            return newIndex !== -1 ? { ...c, order: newIndex } : c;
+            const newIdx = sourceCards.findIndex(sc => sc.id === c.id);
+            return newIdx !== -1 ? { ...c, order: newIdx } : c;
           }
-          if (c.listId === destinationListId) {
-            const newIndex = destListCards.findIndex(lc => lc.id === c.id);
-            return newIndex !== -1 ? { ...c, order: newIndex } : c;
+          if (c.listId === destListId) {
+            const newIdx = destCards.findIndex(dc => dc.id === c.id);
+            return newIdx !== -1 ? { ...c, order: newIdx } : c;
           }
           return c;
         });
-        setCards(updatedCards);
+        setCards(updatedLocalCards);
 
         try {
-          sourceListCards.forEach((c, idx) => {
-            const cardRef = doc(db, "cards", c.id!);
-            batch.update(cardRef, { order: idx });
-          });
-          destListCards.forEach((c, idx) => {
-            const cardRef = doc(db, "cards", c.id!);
-            batch.update(cardRef, { order: idx, listId: destinationListId });
-          });
-          await batch.commit();
-          
+          const sourceUpdates = sourceCards.map((c, idx) => updateCard(c.id!, { order: idx }));
+          const destUpdates = destCards.map((c, idx) => updateCard(c.id!, { 
+            order: idx, 
+            listId: c.id === movedCard.id ? destListId : c.listId 
+          }));
+
+          await Promise.all([...sourceUpdates, ...destUpdates]);
+
           if (user) {
-            const sourceList = lists.find(l => l.id === sourceListId);
-            const destList = lists.find(l => l.id === destinationListId);
+            const sList = lists.find(l => l.id === sourceListId);
+            const dList = lists.find(l => l.id === destListId);
             await logActivity({
               boardId: boardId!,
               userId: user.uid,
               userName: user.displayName || "Usuário",
               type: "card_moved",
-              details: { 
-                cardTitle: movedCard.title,
-                fromList: sourceList?.title,
-                toList: destList?.title
-              }
+              details: { cardTitle: movedCard.title, fromList: sList?.title, toList: dList?.title }
             });
           }
         } catch (error) {
-          console.error("Error updating cross-list batch:", error);
+          console.error("Erro ao mover cartão entre listas:", error);
         }
       }
     }
