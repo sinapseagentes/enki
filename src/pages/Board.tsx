@@ -115,7 +115,7 @@ export const BoardPage = () => {
   };
 
   const onDragEnd = useCallback(async (result: DropResult) => {
-    const { destination, source, type } = result;
+    const { destination, source, draggableId, type } = result;
 
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
@@ -144,12 +144,16 @@ export const BoardPage = () => {
       const sourceListId = source.droppableId;
       const destListId = destination.droppableId;
 
+      const movedCard = cards.find(c => c.id === draggableId);
+      if (!movedCard) return;
+
       const sourceCards = cards.filter(c => c.listId === sourceListId).sort((a, b) => a.order - b.order);
       const destCards = sourceListId === destListId 
         ? sourceCards 
         : cards.filter(c => c.listId === destListId).sort((a, b) => a.order - b.order);
 
-      const [movedCard] = sourceCards.splice(source.index, 1);
+      // Remover da origem usando o índice fornecido pelo DnD
+      sourceCards.splice(source.index, 1);
       
       if (sourceListId === destListId) {
         sourceCards.splice(destination.index, 0, movedCard);
