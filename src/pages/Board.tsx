@@ -4,7 +4,7 @@ import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
 import { subscribeToLists, createList, updateListOrder } from "../services/listService";
 import { subscribeToCards, createCard, updateCard } from "../services/cardService";
-import { subscribeToBoard, getMembersProfile } from "../services/boardService";
+import { subscribeToBoard, getMembersProfile, updateBoardBackground } from "../services/boardService";
 import { logActivity } from "../services/activityService";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -16,13 +16,24 @@ import { NotificationBell } from "../components/NotificationBell";
 import type { List, Card, Board } from "../types";
 
 const COLORS = [
-  "#f87171", // red
-  "#fb923c", // orange
-  "#facc15", // yellow
-  "#4ade80", // green
-  "#60a5fa", // blue
-  "#c084fc", // purple
-  "#a8a29e", // gray
+  { name: "Azul Ollert", value: "#0079bf" },
+  { name: "Verde", value: "#4ade80" },
+  { name: "Laranja", value: "#fb923c" },
+  { name: "Vermelho", value: "#f87171" },
+  { name: "Roxo", value: "#c084fc" },
+  { name: "Rosa", value: "#f472b6" },
+  { name: "Ciano", value: "#22d3ee" },
+  { name: "Cinza", value: "#a8a29e" },
+];
+
+const GRADIENTS = [
+  { name: "Classic Blue", value: "from-blue-600 to-blue-800" },
+  { name: "Midnight", value: "from-slate-800 to-slate-900" },
+  { name: "Sunset", value: "from-orange-500 to-red-600" },
+  { name: "Ocean", value: "from-cyan-500 to-blue-600" },
+  { name: "Forest", value: "from-emerald-500 to-teal-700" },
+  { name: "Purple Rain", value: "from-purple-600 to-indigo-800" },
+  { name: "Royal", value: "from-rose-500 to-indigo-700" },
 ];
 
 export const BoardPage = () => {
@@ -39,9 +50,8 @@ export const BoardPage = () => {
   const [newListTitle, setNewListTitle] = useState("");
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isInviting, setIsInviting] = useState(false);
-  const [filterColor, setFilterColor] = useState<string | null>(null);
-  const [showArchived, setShowArchived] = useState(false);
   const [showActivities, setShowActivities] = useState(false);
+  const [showBgMenu, setShowBgMenu] = useState(false);
 
   useEffect(() => {
     if (!boardId) return;
@@ -65,7 +75,6 @@ export const BoardPage = () => {
     };
   }, [boardId]);
 
-  // Fetch member profiles when board members list changes
   useEffect(() => {
     if (board?.members && board.members.length > 0) {
       getMembersProfile(board.members).then(profiles => {
@@ -127,13 +136,11 @@ export const BoardPage = () => {
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
     if (type === "list") {
-      // Optimistic update
       const newLists = Array.from(lists);
       const [movedList] = newLists.splice(source.index, 1);
       newLists.splice(destination.index, 0, movedList);
       setLists(newLists);
 
-      // Save to db
       try {
         await Promise.all(
           newLists.map((list, index) => updateListOrder(list.id!, index))
@@ -180,7 +187,7 @@ export const BoardPage = () => {
         const destListCards = newCards.filter(c => c.listId === destinationListId).sort((a,b) => a.order - b.order);
         
         destListCards.splice(destination.index, 0, movedCard);
-
+        
         const updatedCards = newCards.map(c => {
           if (c.id === movedCard.id) return { ...c, listId: destinationListId, order: destination.index };
           if (c.listId === sourceListId) {
@@ -221,10 +228,16 @@ export const BoardPage = () => {
         }
       }
     }
-  }, [lists, cards]);
+  }, [lists, cards, boardId, user]);
+
+  const currentBg = board?.background || "from-blue-600 to-blue-800";
+  const isGradient = currentBg.startsWith("from-");
 
   return (
-    <div className={`h-screen flex flex-col transition-colors duration-300 ${theme === 'dark' ? 'bg-theme-page' : 'bg-gradient-to-br from-blue-600 to-blue-800'}`}>
+    <div 
+      className={`h-screen flex flex-col transition-all duration-500 ${theme === 'dark' ? 'bg-theme-page' : (isGradient ? `bg-gradient-to-br ${currentBg}` : '')}`}
+      style={!isGradient && theme !== 'dark' ? { backgroundColor: currentBg } : {}}
+    >
       <nav className={`${theme === 'dark' ? 'bg-slate-900/50' : 'bg-black/20'} backdrop-blur-md px-4 py-3 flex justify-between items-center text-white shrink-0 border-b border-white/10`}>
         <div className="flex items-center gap-4">
           <button 
@@ -234,11 +247,10 @@ export const BoardPage = () => {
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </button>
-          <h1 className="font-bold text-lg hidden sm:block">
+          <h1 className="font-bold text-lg hidden sm:block truncate max-w-xs">
             {board?.title || "Carregando..."}
           </h1>
           
-          {/* Members Avatars List */}
           <div className="flex -space-x-2 ml-2">
             {members.map((member, i) => (
               <div 
@@ -250,168 +262,160 @@ export const BoardPage = () => {
                   <img 
                     src={member.photoURL} 
                     alt={member.displayName}
-                    className="w-8 h-8 rounded-full border-2 border-blue-600 object-cover bg-white"
+                    className="w-8 h-8 rounded-full border-2 border-white/20 object-cover bg-white"
                     title={member.displayName}
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full border-2 border-blue-600 bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold uppercase">
+                  <div className="w-8 h-8 rounded-full border-2 border-white/20 bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold uppercase">
                     {member.displayName?.charAt(0) || "?"}
                   </div>
                 )}
-                {/* Tooltip on hover - positioned below the avatar */}
-                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-lg">
-                  {member.displayName}
-                </span>
               </div>
             ))}
           </div>
-
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={toggleTheme}
-              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
-              title={theme === "light" ? "Mudar para Dark Mode" : "Mudar para Light Mode"}
-            >
-              {theme === "light" ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 18v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              )}
-            </button>
-            <NotificationBell />
-            <button 
-              onClick={() => setShowActivities(!showActivities)}
-              className={`p-2 rounded-full transition-all ${showActivities ? "bg-white text-blue-600" : "text-white/80 hover:text-white hover:bg-white/10"}`}
-              title="Histórico de Atividades"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </button>
-            <button 
-              onClick={() => setIsInviting(true)}
-              className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-1.5 rounded-md flex items-center gap-2 transition-all"
-            >
-              Convidar
-            </button>
-          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Show Archived Toggle */}
+        <div className="flex items-center gap-3">
           <button 
-            onClick={() => setShowArchived(!showArchived)}
-            className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded border transition-all ${
-              showArchived ? "bg-blue-100 text-blue-700 border-blue-200 font-bold" : "bg-white/10 text-white/70 border-white/10 hover:bg-white/20"
-            }`}
-            title={showArchived ? "Ocultar itens arquivados" : "Mostrar itens arquivados"}
+            onClick={toggleTheme}
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+            title={theme === "light" ? "Mudar para Dark Mode" : "Mudar para Light Mode"}
           >
-            {showArchived ? "Arquivados: ON" : "Arquivados"}
+            {theme === "light" ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 18v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            )}
           </button>
+          
+          <NotificationBell />
 
-          {/* Color Filters */}
-          <div className="hidden md:flex items-center gap-1.5 bg-black/10 p-1 rounded-lg">
-            {COLORS.map(color => (
-              <button
-                key={color}
-                onClick={() => setFilterColor(filterColor === color ? null : color)}
-                className={`w-5 h-5 rounded-full border-2 transition-all ${
-                  filterColor === color 
-                    ? "border-white scale-110 shadow-md ring-2 ring-blue-400" 
-                    : "border-transparent opacity-60 hover:opacity-100"
-                }`}
-                style={{ backgroundColor: color }}
-                title="Filtrar por esta cor"
-              />
-            ))}
-            {filterColor && (
-              <button 
-                onClick={() => setFilterColor(null)}
-                className="text-[10px] text-blue-200 hover:text-white ml-1 px-1 underline"
-              >
-                Limpar
-              </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowBgMenu(!showBgMenu)}
+              className={`p-2 rounded-full transition-all ${showBgMenu ? "bg-white text-blue-600" : "text-white/80 hover:text-white hover:bg-white/10"}`}
+              title="Mudar Fundo"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            </button>
+
+            {showBgMenu && (
+              <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+                <h4 className="text-gray-800 font-bold text-sm mb-3">Plano de Fundo</h4>
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Gradientes Premium</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {GRADIENTS.map(g => (
+                        <button
+                          key={g.value}
+                          onClick={() => {
+                            updateBoardBackground(boardId!, g.value);
+                            setShowBgMenu(false);
+                          }}
+                          className={`h-12 rounded-lg bg-gradient-to-br ${g.value} border-2 ${board?.background === g.value ? 'border-blue-500 scale-95' : 'border-transparent hover:scale-105'} transition-all`}
+                          title={g.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Cores Sólidas</span>
+                    <div className="grid grid-cols-4 gap-2">
+                      {COLORS.map(c => (
+                        <button
+                          key={c.value}
+                          onClick={() => {
+                            updateBoardBackground(boardId!, c.value);
+                            setShowBgMenu(false);
+                          }}
+                          className={`h-8 rounded-md border-2 ${board?.background === c.value ? 'border-blue-500 scale-95' : 'border-transparent hover:scale-110'} transition-all`}
+                          style={{ backgroundColor: c.value }}
+                          title={c.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
-          <button
-            onClick={() => setIsInviting(true)}
-            className="text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded font-medium transition-colors flex items-center gap-2"
+          <button 
+            onClick={() => setShowActivities(!showActivities)}
+            className={`p-2 rounded-full transition-all ${showActivities ? "bg-white text-blue-600" : "text-white/80 hover:text-white hover:bg-white/10"}`}
+            title="Histórico de Atividades"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-            Compartilhar
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </button>
+          <button 
+            onClick={() => setIsInviting(true)}
+            className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-1.5 rounded-md flex items-center gap-2 transition-all"
+          >
+            Convidar
           </button>
         </div>
       </nav>
-      
+
       <main className="flex-1 overflow-x-auto overflow-y-hidden p-4">
         <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="board" type="list" direction="horizontal">
+          <Droppable droppableId="all-lists" direction="horizontal" type="list">
             {(provided) => (
               <div 
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="flex gap-4 items-start h-full"
+                className="flex items-start gap-4 h-full"
               >
-                {lists
-                  .filter(l => showArchived || !l.archived)
-                  .map((list, index) => {
-                    const listCards = cards
-                      .filter(c => c.listId === list.id)
-                      .filter(c => showArchived || !c.archived)
-                      .filter(c => !filterColor || c.colorLabel === filterColor)
-                      .sort((a,b) => a.order - b.order);
-                    return (
-                    <ListContainer 
-                      key={list.id} 
-                      list={list} 
-                      cards={listCards} 
-                      index={index} 
-                      onAddCard={handleAddCard}
-                      onCardClick={setActiveCard}
-                    />
-                  );
-                })}
+                {lists.map((list, index) => (
+                  <ListContainer 
+                    key={list.id} 
+                    list={list} 
+                    cards={cards.filter(c => c.listId === list.id)} 
+                    index={index}
+                    onAddCard={handleAddCard}
+                    onCardClick={setActiveCard}
+                  />
+                ))}
                 {provided.placeholder}
-                
+
                 {/* Add List Button */}
                 <div className="w-72 shrink-0">
                   {!isAddingList ? (
-                    <button 
+                    <button
                       onClick={() => setIsAddingList(true)}
-                      className="bg-white/20 hover:bg-white/30 text-white w-full text-left px-4 py-3 rounded-lg flex items-center gap-2 transition-colors font-medium"
+                      className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold p-3 rounded-lg flex items-center gap-2 transition-all"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       Adicionar outra lista
                     </button>
                   ) : (
-                    <form 
-                      onSubmit={handleAddList}
-                      className="bg-gray-100 p-2 rounded-lg"
-                    >
-                      <input 
-                        autoFocus
-                        type="text" 
-                        placeholder="Insira o título da lista..." 
-                        value={newListTitle}
-                        onChange={(e) => setNewListTitle(e.target.value)}
-                        className="w-full px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mb-2"
-                      />
-                      <div className="flex items-center gap-2">
-                        <button 
-                          type="submit" 
-                          disabled={!newListTitle.trim()}
-                          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded font-medium disabled:opacity-50"
-                        >
-                          Adicionar lista
-                        </button>
-                        <button 
-                          type="button" 
-                          onClick={() => setIsAddingList(false)}
-                          className="text-gray-500 hover:text-gray-800 p-1"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                      </div>
-                    </form>
+                    <div className="bg-theme-surface p-3 rounded-lg shadow-xl border border-theme animate-in fade-in slide-in-from-top-2 duration-200">
+                      <form onSubmit={handleAddList}>
+                        <input
+                          autoFocus
+                          type="text"
+                          placeholder="Insira o título da lista..."
+                          value={newListTitle}
+                          onChange={(e) => setNewListTitle(e.target.value)}
+                          className="w-full px-3 py-2 bg-theme-card text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                        <div className="flex items-center gap-2 mt-3">
+                          <button
+                            type="submit"
+                            className="bg-blue-600 text-white text-sm px-4 py-1.5 rounded-md hover:bg-blue-700 font-semibold shadow-sm transition-all"
+                          >
+                            Adicionar lista
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingList(false)}
+                            className="text-theme-secondary hover:text-theme-main p-1.5 transition-colors"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
                   )}
                 </div>
               </div>
@@ -420,7 +424,7 @@ export const BoardPage = () => {
         </DragDropContext>
       </main>
 
-      {/* Modais */}
+      {/* Modals */}
       {activeCard && (
         <CardModal 
           card={activeCard} 
@@ -429,6 +433,7 @@ export const BoardPage = () => {
           onClose={() => setActiveCard(null)} 
         />
       )}
+
       {isInviting && boardId && (
         <InviteModal
           boardId={boardId}
@@ -436,8 +441,12 @@ export const BoardPage = () => {
           onClose={() => setIsInviting(false)}
         />
       )}
+
       {showActivities && boardId && (
-        <ActivityLog boardId={boardId} onClose={() => setShowActivities(false)} />
+        <ActivityLog 
+          boardId={boardId} 
+          onClose={() => setShowActivities(false)} 
+        />
       )}
     </div>
   );

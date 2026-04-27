@@ -11,6 +11,7 @@ export interface Board {
   ownerId: string;
   members: string[]; // array of user UIDs
   archived?: boolean;
+  background?: string; // Color hex or gradient class
   createdAt: number;
   updatedAt: number;
 }

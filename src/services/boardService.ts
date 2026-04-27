@@ -60,6 +60,11 @@ export const updateBoardTitle = async (boardId: string, title: string) => {
   await updateDoc(boardRef, { title, updatedAt: Date.now() });
 };
 
+export const updateBoardBackground = async (boardId: string, background: string) => {
+  const boardRef = doc(db, BOARDS_COLLECTION, boardId);
+  await updateDoc(boardRef, { background, updatedAt: Date.now() });
+};
+
 export const subscribeToBoard = (boardId: string, callback: (board: Board) => void) => {
   const boardRef = doc(db, BOARDS_COLLECTION, boardId);
   return onSnapshot(boardRef, (snapshot) => {
