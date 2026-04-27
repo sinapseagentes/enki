@@ -1,3 +1,5 @@
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { Card } from "../types";
 import { archiveCard, restoreCard } from "../services/cardService";
 
@@ -7,6 +9,26 @@ interface CardItemProps {
 }
 
 export const CardItem = ({ card, onClick }: CardItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: card.id!,
+    data: {
+      type: "card",
+      card,
+    },
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
+
   const isOverdue = card.dueDate ? card.dueDate < Date.now() : false;
   const isDueSoon = card.dueDate ? (card.dueDate - Date.now() < 24 * 60 * 60 * 1000) && !isOverdue : false;
   const isCompleted = card.checklists && card.checklists.length > 0 && card.checklists.every(i => i.completed);
@@ -46,12 +68,16 @@ export const CardItem = ({ card, onClick }: CardItemProps) => {
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       onClick={onClick}
       className={`group rounded shadow-sm border mb-2 cursor-pointer transition-shadow relative overflow-hidden ${
         card.archived ? "bg-theme-surface/50 border-theme opacity-75 grayscale" : "bg-theme-card border-theme"
-      } hover:shadow-md ${
+      } ${isDragging ? "opacity-30 border-blue-500 border-2" : "hover:shadow-md"} ${
         card.isFilteredOut ? "opacity-10 scale-95 pointer-events-none blur-[1px]" : "opacity-100"
       }`}
+      {...attributes}
+      {...listeners}
     >
       {card.colorLabel && !card.coverUrl && (
         <div className="h-2 w-full" style={{ backgroundColor: card.colorLabel }} />

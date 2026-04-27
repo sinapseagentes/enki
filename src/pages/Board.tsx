@@ -1,17 +1,36 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { subscribeToLists, createList } from "../services/listService";
-import { subscribeToCards, createCard } from "../services/cardService";
+import { 
+  DndContext, 
+  DragOverlay, 
+  closestCorners, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  type DragStartEvent,
+  type DragOverEvent,
+  type DragEndEvent
+} from "@dnd-kit/core";
+import { 
+  arrayMove, 
+  SortableContext, 
+  sortableKeyboardCoordinates, 
+  horizontalListSortingStrategy 
+} from "@dnd-kit/sortable";
+import { subscribeToLists, createList, updateListOrder } from "../services/listService";
+import { subscribeToCards, createCard, updateCard } from "../services/cardService";
 import { subscribeToBoard, getMembersProfile, updateBoardBackground } from "../services/boardService";
 import { logActivity } from "../services/activityService";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { ListContainer } from "../components/ListContainer";
+import { CardItem } from "../components/CardItem";
 import { CardModal } from "../components/CardModal";
 import { InviteModal } from "../components/InviteModal";
 import { CommandCenter } from "../components/CommandCenter";
-import { COLORS, GRADIENTS } from "../constants/design";
 import type { List, Card, Board } from "../types";
+import { COLORS, GRADIENTS } from "../constants/design";
 
 export const BoardPage = () => {
   const { id: boardId } = useParams<{ id: string }>();
@@ -88,6 +107,117 @@ export const BoardPage = () => {
       setIsAddingList(false);
     } catch (error) {
       console.error("Error creating list:", error);
+    }
+  };
+  const [activeDragList, setActiveDragList] = useState<List | null>(null);
+  const [activeDragCard, setActiveDragCard] = useState<Card | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const onDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const { type } = active.data.current || {};
+
+    if (type === "list") {
+      const list = lists.find((l) => l.id === active.id);
+      if (list) setActiveDragList(list);
+    } else if (type === "card") {
+      const card = cards.find((c) => c.id === active.id);
+      if (card) setActiveDragCard(card);
+    }
+  };
+
+  const onDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) return;
+
+    const isActiveACard = active.data.current?.type === "card";
+    const isOverACard = over.data.current?.type === "card";
+
+    if (!isActiveACard) return;
+
+    // 1. Dropping a Card over another Card
+    if (isActiveACard && isOverACard) {
+      setCards((prevCards) => {
+        const activeIndex = prevCards.findIndex((c) => c.id === activeId);
+        const overIndex = prevCards.findIndex((c) => c.id === overId);
+
+        if (prevCards[activeIndex].listId !== prevCards[overIndex].listId) {
+          prevCards[activeIndex].listId = prevCards[overIndex].listId;
+          return arrayMove(prevCards, activeIndex, overIndex - 1);
+        }
+
+        return arrayMove(prevCards, activeIndex, overIndex);
+      });
+    }
+
+    // 2. Dropping a Card over a List
+    const isOverAList = over.data.current?.type === "list";
+
+    if (isActiveACard && isOverAList) {
+      setCards((prevCards) => {
+        const activeIndex = prevCards.findIndex((c) => c.id === activeId);
+        prevCards[activeIndex].listId = overId as string;
+        return arrayMove(prevCards, activeIndex, activeIndex); // Triggers re-render
+      });
+    }
+  };
+
+  const onDragEnd = async (event: DragEndEvent) => {
+    setActiveDragList(null);
+    setActiveDragCard(null);
+
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) return;
+
+    const isActiveAList = active.data.current?.type === "list";
+    if (isActiveAList) {
+      const oldIndex = lists.findIndex((l) => l.id === activeId);
+      const newIndex = lists.findIndex((l) => l.id === overId);
+      const newLists = arrayMove(lists, oldIndex, newIndex);
+      setLists(newLists);
+
+      // Persistir no Firebase
+      try {
+        await Promise.all(newLists.map((l, i) => updateListOrder(l.id!, i)));
+      } catch (e) {
+        console.error("Erro ao salvar ordem das listas:", e);
+      }
+      return;
+    }
+
+    // Persistir cartões no Firebase
+    const cardId = activeId as string;
+    const movedCard = cards.find(c => c.id === cardId);
+    if (!movedCard) return;
+
+    const listCards = cards
+      .filter(c => c.listId === movedCard.listId)
+      .sort((a, b) => a.order - b.order);
+
+    try {
+      await Promise.all(listCards.map((c, i) => updateCard(c.id!, { order: i, listId: c.listId })));
+    } catch (e) {
+      console.error("Erro ao salvar ordem dos cartões:", e);
     }
   };
 
@@ -385,58 +515,85 @@ export const BoardPage = () => {
       </nav>
 
       <main className="flex-1 overflow-x-auto overflow-y-hidden p-4">
-        <div className="flex items-start gap-4 h-full">
-          {lists.map((list) => (
-            <ListContainer 
-              key={list.id} 
-              list={list} 
-              cards={getFilteredCards(list.id!)} 
-              onAddCard={handleAddCard}
-              onCardClick={setActiveCard}
-            />
-          ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={onDragStart}
+          onDragOver={onDragOver}
+          onDragEnd={onDragEnd}
+        >
+          <div className="flex items-start gap-4 h-full">
+            <SortableContext
+              items={lists.map((l) => l.id!)}
+              strategy={horizontalListSortingStrategy}
+            >
+              {lists.map((list) => (
+                <ListContainer 
+                  key={list.id} 
+                  list={list} 
+                  cards={getFilteredCards(list.id!)} 
+                  onAddCard={handleAddCard}
+                  onCardClick={setActiveCard}
+                />
+              ))}
+            </SortableContext>
 
-          {/* Add List Button */}
-          <div className="w-72 shrink-0">
-            {!isAddingList ? (
-              <button
-                onClick={() => setIsAddingList(true)}
-                className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold p-3 rounded-lg flex items-center gap-2 transition-all"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                Adicionar outra lista
-              </button>
-            ) : (
-              <div className="bg-theme-surface p-3 rounded-lg shadow-xl border border-theme animate-in fade-in slide-in-from-top-2 duration-200">
-                <form onSubmit={handleAddList}>
-                  <input
-                    autoFocus
-                    type="text"
-                    placeholder="Insira o título da lista..."
-                    value={newListTitle}
-                    onChange={(e) => setNewListTitle(e.target.value)}
-                    className="w-full px-3 py-2 bg-theme-card text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                  <div className="flex items-center gap-2 mt-3">
-                    <button
-                      type="submit"
-                      className="bg-blue-600 text-white text-sm px-4 py-1.5 rounded-md hover:bg-blue-700 font-semibold shadow-sm transition-all"
-                    >
-                      Adicionar lista
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingList(false)}
-                      className="text-theme-secondary hover:text-theme-main p-1.5 transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
+            {/* Add List Button */}
+            <div className="w-72 shrink-0">
+              {!isAddingList ? (
+                <button
+                  onClick={() => setIsAddingList(true)}
+                  className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold p-3 rounded-lg flex items-center gap-2 transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Adicionar outra lista
+                </button>
+              ) : (
+                <div className="bg-theme-surface p-3 rounded-lg shadow-xl border border-theme animate-in fade-in slide-in-from-top-2 duration-200">
+                  <form onSubmit={handleAddList}>
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Insira o título da lista..."
+                      value={newListTitle}
+                      onChange={(e) => setNewListTitle(e.target.value)}
+                      className="w-full px-3 py-2 bg-theme-card text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        type="submit"
+                        className="bg-blue-600 text-white text-sm px-4 py-1.5 rounded-md hover:bg-blue-700 font-semibold shadow-sm transition-all"
+                      >
+                        Adicionar lista
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingList(false)}
+                        className="text-theme-secondary hover:text-theme-main p-1.5 transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+
+          <DragOverlay>
+            {activeDragList ? (
+              <ListContainer
+                list={activeDragList}
+                cards={cards.filter((c) => c.listId === activeDragList.id)}
+                onAddCard={() => {}}
+                onCardClick={() => {}}
+              />
+            ) : null}
+            {activeDragCard ? (
+              <CardItem card={activeDragCard} onClick={() => {}} />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </main>
 
       {/* Modals */}

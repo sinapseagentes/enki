@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { CardItem } from "./CardItem";
 import type { List, Card } from "../types";
 import { archiveList, restoreList, updateListTitle } from "../services/listService";
@@ -11,6 +13,26 @@ interface ListContainerProps {
 }
 
 export const ListContainer = ({ list, cards, onAddCard, onCardClick }: ListContainerProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: list.id!,
+    data: {
+      type: "list",
+      list,
+    },
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
+
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -67,13 +89,17 @@ export const ListContainer = ({ list, cards, onAddCard, onCardClick }: ListConta
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={`bg-theme-surface w-72 rounded-lg flex flex-col flex-shrink-0 max-h-full border border-theme shadow-sm transition-colors animate-slide-up ${
-        list.archived ? "opacity-75" : ""
-      }`}
+        isDragging ? "opacity-30 border-blue-500 border-2" : ""
+      } ${list.archived ? "opacity-75" : ""}`}
     >
       {/* List Header */}
       <div
-        className={`p-3 font-semibold text-theme-main flex justify-between items-center group rounded-t-lg ${list.archived ? "opacity-50" : ""}`}
+        {...attributes}
+        {...listeners}
+        className={`p-3 font-semibold text-theme-main flex justify-between items-center group rounded-t-lg cursor-grab active:cursor-grabbing ${list.archived ? "opacity-50" : ""}`}
       >
         {isEditingTitle ? (
           <input
@@ -108,7 +134,7 @@ export const ListContainer = ({ list, cards, onAddCard, onCardClick }: ListConta
             <button
               onClick={handleArchiveList}
               className={`ml-1 p-1 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-gray-200 rounded transition-all shrink-0 ${list.archived ? "opacity-100 text-blue-600" : ""}`}
-              title={list.archived ? "Lista Arquivada" : "Arquivar lista"}
+              title={list.archived ? "Arquivar lista" : "Arquivar lista"}
               disabled={list.archived}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
@@ -118,10 +144,15 @@ export const ListContainer = ({ list, cards, onAddCard, onCardClick }: ListConta
       </div>
 
       {/* Cards Area */}
-      <div className="px-2 py-1 flex-1 overflow-y-auto min-h-[10px]">
-        {cards.map((card) => (
-          <CardItem key={card.id} card={card} onClick={() => onCardClick(card)} />
-        ))}
+      <div className="px-2 py-1 flex-1 overflow-y-auto min-h-[50px]">
+        <SortableContext
+          items={cards.map((c) => c.id!)}
+          strategy={verticalListSortingStrategy}
+        >
+          {cards.map((card) => (
+            <CardItem key={card.id} card={card} onClick={() => onCardClick(card)} />
+          ))}
+        </SortableContext>
       </div>
 
       {/* Add Card Footer */}
