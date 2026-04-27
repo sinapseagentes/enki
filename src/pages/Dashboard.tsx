@@ -67,7 +67,7 @@ const BoardCard = ({ board, onArchive, onRestore }: {
   return (
     <div 
       onClick={() => !isEditingTitle && navigate(`/board/${board.id}`)}
-      className={`${board.archived ? "bg-theme-surface grayscale opacity-75" : (isGradient ? `bg-gradient-to-br ${boardBg}` : "bg-blue-600")} rounded-lg h-32 p-4 cursor-pointer transition-all shadow-sm group relative flex flex-col justify-between overflow-hidden border border-theme`}
+      className={`${board.archived ? "bg-theme-surface grayscale opacity-75" : (isGradient ? `bg-gradient-to-br ${boardBg}` : "bg-blue-600")} rounded-lg h-32 p-4 cursor-pointer transition-all shadow-sm group relative flex flex-col justify-between overflow-hidden border border-theme hover-lift active-shrink animate-slide-up`}
       style={!isGradient && !board.archived && board.background ? { backgroundColor: board.background } : {}}
     >
       <div>
@@ -230,7 +230,7 @@ export const Dashboard = () => {
         <div className="flex items-center gap-4">
           <button 
             onClick={toggleTheme}
-            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all active-shrink"
             title={theme === "light" ? "Mudar para Dark Mode" : "Mudar para Light Mode"}
           >
             {theme === "light" ? (
@@ -297,7 +297,7 @@ export const Dashboard = () => {
           )}
           <button 
             onClick={logout}
-            className="text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md transition-colors"
+            className="text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md transition-colors active-shrink"
           >
             Sair
           </button>
@@ -324,7 +324,7 @@ export const Dashboard = () => {
           {!isCreating && !showArchived && (
             <div 
               onClick={() => setIsCreating(true)}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg h-32 flex items-center justify-center cursor-pointer transition-all border-2 border-dashed border-white/30 group"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg h-32 flex items-center justify-center cursor-pointer transition-all border-2 border-dashed border-white/30 group hover-lift active-shrink animate-slide-up"
             >
               <span className="text-white font-medium flex items-center gap-2 group-hover:scale-105 transition-transform">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>

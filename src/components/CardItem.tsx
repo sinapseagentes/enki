@@ -54,8 +54,8 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className={`group rounded shadow-sm border mb-2 cursor-grab active:cursor-grabbing transition-all relative overflow-hidden ${
-            card.archived ? "bg-theme-surface/50 border-theme opacity-75 grayscale" : "bg-theme-card border-theme hover:bg-theme-surface/30"
+          className={`group rounded shadow-sm border mb-2 cursor-grab active:cursor-grabbing transition-all relative overflow-hidden hover-lift active-shrink ${
+            card.archived ? "bg-theme-surface/50 border-theme opacity-75 grayscale" : "bg-theme-card border-theme"
           } ${snapshot.isDragging ? "shadow-lg rotate-2 scale-105" : ""}`}
         >
           {card.colorLabel && !card.coverUrl && (

@@ -73,7 +73,7 @@ export const ListContainer = ({ list, cards, index, onAddCard, onCardClick }: Li
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className={`bg-theme-surface w-72 rounded-lg flex flex-col flex-shrink-0 max-h-full border border-theme transition-colors ${
+          className={`bg-theme-surface w-72 rounded-lg flex flex-col flex-shrink-0 max-h-full border border-theme transition-colors animate-slide-up ${
             snapshot.isDragging ? "shadow-2xl opacity-80" : "shadow-sm"
           }`}
         >
