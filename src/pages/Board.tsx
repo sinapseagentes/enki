@@ -32,6 +32,9 @@ export const BoardPage = () => {
   const [isInviting, setIsInviting] = useState(false);
   const [showActivities, setShowActivities] = useState(false);
   const [showBgMenu, setShowBgMenu] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterLabel, setFilterLabel] = useState<string | null>(null);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   useEffect(() => {
     if (!boardId) return;
@@ -213,6 +216,22 @@ export const BoardPage = () => {
   const currentBg = board?.background || "from-blue-600 to-blue-800";
   const isGradient = currentBg.startsWith("from-");
 
+  // Filter Logic
+  const getFilteredCards = (listId: string) => {
+    return cards
+      .filter(c => c.listId === listId)
+      .map(card => {
+        const matchesText = card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           (card.description?.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesLabel = !filterLabel || card.colorLabel === filterLabel;
+        
+        return {
+          ...card,
+          isFilteredOut: !(matchesText && matchesLabel)
+        };
+      });
+  };
+
   return (
     <div 
       className={`h-screen flex flex-col transition-all duration-500 ${theme === 'dark' ? 'bg-theme-page' : (isGradient ? `bg-gradient-to-br ${currentBg}` : '')}`}
@@ -227,11 +246,66 @@ export const BoardPage = () => {
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </button>
-          <h1 className="font-bold text-lg hidden sm:block truncate max-w-xs">
+          <h1 className="font-bold text-lg hidden lg:block truncate max-w-[150px]">
             {board?.title || "Carregando..."}
           </h1>
+
+          {/* Board Search Bar */}
+          <div className="relative group ml-2">
+            <input 
+              type="text"
+              placeholder="Buscar cartões..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-40 sm:w-64 bg-white/10 hover:bg-white/20 focus:bg-white text-white focus:text-gray-900 border border-white/20 focus:border-blue-500 rounded-lg pl-9 pr-3 py-1.5 transition-all outline-none text-sm placeholder-white/60 focus:placeholder-gray-400"
+            />
+            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/60 group-focus-within:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          {/* Filter Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowFilterMenu(!showFilterMenu)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                filterLabel || searchTerm ? "bg-yellow-400 text-yellow-900 shadow-lg" : "bg-white/10 text-white hover:bg-white/20"
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+              <span className="hidden sm:inline">Filtro</span>
+              {(filterLabel || searchTerm) && <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />}
+            </button>
+
+            {showFilterMenu && (
+              <div className="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-gray-800 font-bold text-sm">Filtrar por Etiqueta</h4>
+                  {(filterLabel || searchTerm) && (
+                    <button 
+                      onClick={() => { setFilterLabel(null); setSearchTerm(""); }}
+                      className="text-[10px] text-blue-600 hover:underline font-bold"
+                    >
+                      Limpar
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {COLORS.map(c => (
+                    <button 
+                      key={c.value}
+                      onClick={() => setFilterLabel(filterLabel === c.value ? null : c.value)}
+                      className={`h-6 rounded border-2 transition-all ${filterLabel === c.value ? 'border-blue-600 scale-110 shadow-md' : 'border-transparent hover:scale-105'}`}
+                      style={{ backgroundColor: c.value }}
+                      title={c.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           
-          <div className="flex -space-x-2 ml-2">
+          <div className="flex -space-x-2 ml-2 hidden sm:flex">
             {members.map((member, i) => (
               <div 
                 key={member.uid} 
@@ -350,7 +424,7 @@ export const BoardPage = () => {
                   <ListContainer 
                     key={list.id} 
                     list={list} 
-                    cards={cards.filter(c => c.listId === list.id)} 
+                    cards={getFilteredCards(list.id!)} 
                     index={index}
                     onAddCard={handleAddCard}
                     onCardClick={setActiveCard}

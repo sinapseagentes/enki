@@ -143,6 +143,7 @@ export const Dashboard = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [searchBoard, setSearchBoard] = useState("");
   const [dashboardBg, setDashboardBg] = useState<string>("");
   const [showBgMenu, setShowBgMenu] = useState(false);
 
@@ -212,7 +213,9 @@ export const Dashboard = () => {
     }
   };
 
-  const visibleBoards = boards.filter(b => showArchived || !b.archived);
+  const visibleBoards = boards
+    .filter(b => showArchived || !b.archived)
+    .filter(b => b.title.toLowerCase().includes(searchBoard.toLowerCase()));
   const isGradient = dashboardBg.startsWith("from-");
 
   return (
@@ -305,10 +308,35 @@ export const Dashboard = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className={`text-3xl font-bold transition-colors ${isGradient || (dashboardBg && theme !== 'dark') ? 'text-white drop-shadow-md' : 'text-theme-main'}`}>
-            Seus Quadros
-          </h1>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
+            <h1 className={`text-3xl font-bold transition-colors ${isGradient || (dashboardBg && theme !== 'dark') ? 'text-white drop-shadow-md' : 'text-theme-main'}`}>
+              Seus Quadros
+            </h1>
+            
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64 group">
+              <input 
+                type="text"
+                placeholder="Buscar quadros..."
+                value={searchBoard}
+                onChange={(e) => setSearchBoard(e.target.value)}
+                className="w-full bg-white/10 hover:bg-white/20 focus:bg-white text-white focus:text-gray-900 border border-white/20 focus:border-blue-500 rounded-lg pl-9 pr-3 py-2 transition-all outline-none text-sm placeholder-white/60 focus:placeholder-gray-400"
+              />
+              <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/60 group-focus-within:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {searchBoard && (
+                <button 
+                  onClick={() => setSearchBoard("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white focus:text-gray-400"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
+            </div>
+          </div>
+
           <button 
             onClick={() => setShowArchived(!showArchived)}
             className={`text-sm px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${

@@ -3,7 +3,7 @@ import type { Card } from "../types";
 import { archiveCard, restoreCard } from "../services/cardService";
 
 interface CardItemProps {
-  card: Card;
+  card: Card & { isFilteredOut?: boolean };
   index: number;
   onClick: () => void;
 }
@@ -56,7 +56,9 @@ export const CardItem = ({ card, index, onClick }: CardItemProps) => {
           onClick={onClick}
           className={`group rounded shadow-sm border mb-2 cursor-grab active:cursor-grabbing transition-all relative overflow-hidden hover-lift active-shrink ${
             card.archived ? "bg-theme-surface/50 border-theme opacity-75 grayscale" : "bg-theme-card border-theme"
-          } ${snapshot.isDragging ? "shadow-lg rotate-2 scale-105" : ""}`}
+          } ${snapshot.isDragging ? "shadow-lg rotate-2 scale-105" : ""} ${
+            card.isFilteredOut ? "opacity-10 scale-95 pointer-events-none blur-[1px]" : "opacity-100"
+          }`}
         >
           {card.colorLabel && !card.coverUrl && (
             <div className="h-2 w-full" style={{ backgroundColor: card.colorLabel }} />
