@@ -87,8 +87,18 @@ Este arquivo rastreia o desenvolvimento do Ollert seguindo as regras de versiona
 
 ---
 
+## 🟡 Backlog 8 (Command Center - Side Panels) - [EM ANDAMENTO]
+
+*Status: 0% Concluído | Versão Base: V8.0.0.0*
+
+1. **Feature 8.1.0.0:** [ ] Unificar Activity Log e Notificações em Painel Lateral.
+2. **Feature 8.2.0.0:** [ ] Adicionar Tabs (Abas) para navegação interna no painel.
+3. **Feature 8.3.0.0:** [ ] Implementar Backdrop Blur (Efeito Glass) ao abrir o painel.
+4. **Feature 8.4.0.0:** [ ] Atalhos de teclado (Ex: 'M' para abrir o menu).
+
+---
+
 ## 🔴 Próximos Backlogs (Sugestão)
 
-1. **Backlog 8 (Gestão de Itens):** Mover/Copiar cartões entre quadros.
-2. **Backlog 9 (Privacidade):** Níveis de permissão (Admin/Editor/Leitor).
-3. **Backlog 10 (Produtividade):** Templates de quadros e automações simples.
+1. **Backlog 9 (Gestão de Itens):** Mover/Copiar cartões entre quadros.
+2. **Backlog 10 (Privacidade):** Níveis de permissão (Admin/Editor/Leitor).

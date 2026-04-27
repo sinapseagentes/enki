@@ -247,7 +247,7 @@ export const BoardPage = () => {
       className={`h-screen flex flex-col transition-all duration-500 ${theme === 'dark' ? 'bg-theme-page' : (isGradient ? `bg-gradient-to-br ${currentBg}` : '')}`}
       style={!isGradient && theme !== 'dark' ? { backgroundColor: currentBg } : {}}
     >
-      <nav className={`${theme === 'dark' ? 'bg-slate-900/50' : 'bg-black/20'} backdrop-blur-md px-4 py-3 flex justify-between items-center text-white shrink-0 border-b border-white/10`}>
+      <nav className={`relative z-50 ${theme === 'dark' ? 'bg-slate-900/50' : 'bg-black/20'} backdrop-blur-md px-4 py-3 flex justify-between items-center text-white shrink-0 border-b border-white/10 shadow-lg`}>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate("/")}
@@ -288,7 +288,7 @@ export const BoardPage = () => {
             </button>
 
             {showFilterMenu && (
-              <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] p-4 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-gray-800 font-bold text-sm">Filtros Ativos</h4>
                   {(filterLabel || searchTerm || filterMember || filterDateStatus) && (
@@ -415,7 +415,7 @@ export const BoardPage = () => {
             </button>
 
             {showBgMenu && (
-              <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] p-4 animate-in fade-in zoom-in-95 duration-200">
                 <h4 className="text-gray-800 font-bold text-sm mb-3">Plano de Fundo</h4>
                 <div className="space-y-4">
                   <div>
