@@ -19,6 +19,9 @@ export interface Board {
   archived?: boolean;
   background?: string; // Color hex or gradient class
   tags?: Tag[]; // Board-specific tags
+  permissions?: {
+    [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer';
+  }; // Permission levels for board access
   createdAt: number;
   updatedAt: number;
 }

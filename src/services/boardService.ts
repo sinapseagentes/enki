@@ -11,6 +11,9 @@ export const createBoard = async (title: string, userId: string): Promise<string
     title,
     ownerId: userId,
     members: [userId],
+    permissions: {
+      [userId]: 'owner',
+    },
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -91,18 +94,19 @@ export const inviteUserToBoard = async (boardId: string, email: string) => {
   // Find user by email
   const q = query(collection(db, USERS_COLLECTION), where("email", "==", email));
   const snapshot = await getDocs(q);
-  
+   
   if (snapshot.empty) {
     throw new Error("Usuário não encontrado. Ele precisa ter feito login no aplicativo pelo menos uma vez.");
   }
-  
+   
   const userDoc = snapshot.docs[0];
   const uid = userDoc.data().uid;
 
-  // Add uid to board members
+  // Add uid to board members and set permission level
   const boardRef = doc(db, BOARDS_COLLECTION, boardId);
   await updateDoc(boardRef, {
-    members: arrayUnion(uid)
+    members: arrayUnion(uid),
+    [`permissions.${uid}`]: 'editor'
   });
 
   return uid;
