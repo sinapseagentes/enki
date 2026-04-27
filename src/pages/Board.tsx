@@ -34,6 +34,8 @@ export const BoardPage = () => {
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLabel, setFilterLabel] = useState<string | null>(null);
+  const [filterMember, setFilterMember] = useState<string | null>(null);
+  const [filterDateStatus, setFilterDateStatus] = useState<"overdue" | "today" | null>(null);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   useEffect(() => {
@@ -224,10 +226,18 @@ export const BoardPage = () => {
         const matchesText = card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            (card.description?.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesLabel = !filterLabel || card.colorLabel === filterLabel;
+        const matchesMember = !filterMember || card.title.includes(`@${members.find(m => m.uid === filterMember)?.displayName}`); 
+        
+        const isCardOverdue = card.dueDate ? card.dueDate < Date.now() : false;
+        const isCardToday = card.dueDate ? new Date(card.dueDate).toDateString() === new Date().toDateString() : false;
+        
+        const matchesDate = !filterDateStatus || 
+                           (filterDateStatus === "overdue" && isCardOverdue) ||
+                           (filterDateStatus === "today" && isCardToday);
         
         return {
           ...card,
-          isFilteredOut: !(matchesText && matchesLabel)
+          isFilteredOut: !(matchesText && matchesLabel && matchesMember && matchesDate)
         };
       });
   };
@@ -269,37 +279,88 @@ export const BoardPage = () => {
             <button 
               onClick={() => setShowFilterMenu(!showFilterMenu)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                filterLabel || searchTerm ? "bg-yellow-400 text-yellow-900 shadow-lg" : "bg-white/10 text-white hover:bg-white/20"
+                filterLabel || searchTerm || filterMember || filterDateStatus ? "bg-yellow-400 text-yellow-900 shadow-lg" : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
               <span className="hidden sm:inline">Filtro</span>
-              {(filterLabel || searchTerm) && <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />}
+              {(filterLabel || searchTerm || filterMember || filterDateStatus) && <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />}
             </button>
 
             {showFilterMenu && (
-              <div className="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-gray-800 font-bold text-sm">Filtrar por Etiqueta</h4>
-                  {(filterLabel || searchTerm) && (
+                  <h4 className="text-gray-800 font-bold text-sm">Filtros Ativos</h4>
+                  {(filterLabel || searchTerm || filterMember || filterDateStatus) && (
                     <button 
-                      onClick={() => { setFilterLabel(null); setSearchTerm(""); }}
+                      onClick={() => { 
+                        setFilterLabel(null); 
+                        setSearchTerm(""); 
+                        setFilterMember(null);
+                        setFilterDateStatus(null);
+                      }}
                       className="text-[10px] text-blue-600 hover:underline font-bold"
                     >
-                      Limpar
+                      Limpar Tudo
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-4 gap-2 mb-4">
-                  {COLORS.map(c => (
-                    <button 
-                      key={c.value}
-                      onClick={() => setFilterLabel(filterLabel === c.value ? null : c.value)}
-                      className={`h-6 rounded border-2 transition-all ${filterLabel === c.value ? 'border-blue-600 scale-110 shadow-md' : 'border-transparent hover:scale-105'}`}
-                      style={{ backgroundColor: c.value }}
-                      title={c.name}
-                    />
-                  ))}
+
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Etiquetas</span>
+                    <div className="grid grid-cols-4 gap-2">
+                      {COLORS.map(c => (
+                        <button 
+                          key={c.value}
+                          onClick={() => setFilterLabel(filterLabel === c.value ? null : c.value)}
+                          className={`h-6 rounded border-2 transition-all ${filterLabel === c.value ? 'border-blue-600 scale-110 shadow-md' : 'border-transparent hover:scale-105'}`}
+                          style={{ backgroundColor: c.value }}
+                          title={c.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Membros</span>
+                    <div className="flex flex-wrap gap-2">
+                      {members.map(member => (
+                        <button
+                          key={member.uid}
+                          onClick={() => setFilterMember(filterMember === member.uid ? null : member.uid)}
+                          className={`w-8 h-8 rounded-full border-2 transition-all ${filterMember === member.uid ? 'border-blue-600 scale-110 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                          title={member.displayName}
+                        >
+                          {member.photoURL ? (
+                            <img src={member.photoURL} alt={member.displayName} className="w-full h-full rounded-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-[10px] text-gray-600 font-bold uppercase">
+                              {member.displayName?.charAt(0)}
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Data de Entrega</span>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setFilterDateStatus(filterDateStatus === "overdue" ? null : "overdue")}
+                        className={`text-xs px-3 py-1 rounded-full border transition-all ${filterDateStatus === "overdue" ? 'bg-red-100 border-red-500 text-red-700 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+                      >
+                        Atrasados
+                      </button>
+                      <button 
+                        onClick={() => setFilterDateStatus(filterDateStatus === "today" ? null : "today")}
+                        className={`text-xs px-3 py-1 rounded-full border transition-all ${filterDateStatus === "today" ? 'bg-yellow-100 border-yellow-500 text-yellow-700 font-bold' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+                      >
+                        Vence Hoje
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

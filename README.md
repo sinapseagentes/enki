@@ -1,73 +1,32 @@
-# React + TypeScript + Vite
+# Ollert - Trello Clone Premium
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Desenvolvimento de um clone do Trello usando as melhores práticas de **ACID, SOLID, SCRUM, UI/UX e Secure by Design (SbD)**.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologias
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** React + TypeScript + Vite
+- **Estilização:** Tailwind CSS v4 + Vanilla CSS
+- **Backend:** Firebase (Auth, Firestore, Storage)
+- **Animações:** Framer Motion / CSS Transitions
 
-## React Compiler
+## 📅 Status do Projeto
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Atualmente na **V7 (Busca & Filtros)**.
+Para ver o progresso detalhado de cada Sprint e Feature, acesse o arquivo:
 
-## Expanding the ESLint configuration
+👉 [BACKLOG.md](./BACKLOG.md)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ Como rodar o projeto
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. Instale as dependências: `npm install`
+2. Inicie o Firebase Emulator: `firebase emulators:start`
+3. Inicie o servidor de desenvolvimento: `npm run dev`
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🏷️ Versionamento
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+O projeto segue o padrão `Vx.y.z.k`:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **x:** Major version (0 para pre-MVP)
+- **y:** Backlog (Sprint)
+- **z:** Feature dentro do backlog
+- **k:** Correções de erro
