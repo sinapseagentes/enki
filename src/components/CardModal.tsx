@@ -9,6 +9,7 @@ import { getBoards } from "../services/boardService";
 import { subscribeToLists } from "../services/listService";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext";
+import { useTheme } from "../contexts/ThemeContext";
 import confetti from "canvas-confetti";
 
 interface CardModalProps {
@@ -31,6 +32,7 @@ const COLORS = [
 export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps) => {
   const { user } = useAuth();
   const { showNotification } = useNotification();
+  const { scribeMode } = useTheme();
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
   const [colorLabel, setColorLabel] = useState(card.colorLabel || "");
@@ -53,6 +55,8 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(card.tagIds || []);
   const [tagSearch, setTagSearch] = useState("");
   const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [cardPermissions, setCardPermissions] = useState<{ [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer' }>(card.permissions || {});
+  const [showPermissions, setShowPermissions] = useState(false);
 
   const toggleTag = (tagId: string) => {
     setSelectedTagIds(prev => 
@@ -123,6 +127,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
         checklists,
         attachments,
         coverUrl,
+        permissions: Object.keys(cardPermissions).length > 0 ? cardPermissions : undefined,
       });
       showNotification("Cartão atualizado com sucesso!");
       onClose();
@@ -413,6 +418,73 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
             </button>
           </div>
 
+          {/* Card Permissions — compact strip */}
+          {boardMembers && boardMembers.length > 0 && (
+            <div className="mb-4">
+              <button
+                onClick={() => setShowPermissions(!showPermissions)}
+                className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors group"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                {scribeMode ? 'Hierarquia do Selo' : 'Permissões'}
+                <svg className={`w-3 h-3 transition-transform ${showPermissions ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                {Object.keys(cardPermissions).length > 0 && (
+                  <span className="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full text-[8px] font-bold">
+                    {Object.keys(cardPermissions).length} override{Object.keys(cardPermissions).length > 1 ? 's' : ''}
+                  </span>
+                )}
+              </button>
+              
+              {showPermissions && (
+                <div className="mt-3 flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {boardMembers.map(member => {
+                    const effectivePerm = cardPermissions[member.uid] || board?.permissions?.[member.uid] || 'editor';
+                    const isOverridden = !!cardPermissions[member.uid];
+                    const permColors: Record<string, string> = {
+                      owner: 'bg-blue-100 text-blue-700 border-blue-200',
+                      admin: 'bg-purple-100 text-purple-700 border-purple-200',
+                      editor: 'bg-green-100 text-green-700 border-green-200',
+                      viewer: 'bg-gray-100 text-gray-600 border-gray-200',
+                    };
+                    return (
+                      <div key={member.uid} className="relative group">
+                        <button
+                          className={`flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full border text-[10px] font-bold transition-all hover:shadow-sm ${
+                            isOverridden ? permColors[effectivePerm] + ' ring-1 ring-offset-1 ring-blue-300' : permColors[effectivePerm]
+                          }`}
+                          onClick={() => {
+                            const levels: Array<'owner' | 'admin' | 'editor' | 'viewer'> = ['owner', 'admin', 'editor', 'viewer'];
+                            const currentIdx = levels.indexOf(effectivePerm as any);
+                            const nextPerm = levels[(currentIdx + 1) % levels.length];
+                            setCardPermissions({ ...cardPermissions, [member.uid]: nextPerm });
+                          }}
+                          title={`${member.displayName}: ${effectivePerm}${isOverridden ? ' (override)' : ' (herdado)'}\nClique para alternar`}
+                        >
+                          <div className="w-5 h-5 rounded-full bg-white/80 flex items-center justify-center text-[8px] font-bold uppercase overflow-hidden flex-shrink-0">
+                            {member.photoURL ? <img src={member.photoURL} alt="" className="w-full h-full object-cover rounded-full" /> : member.displayName?.charAt(0) || '?'}
+                          </div>
+                          {effectivePerm}
+                        </button>
+                        {isOverridden && (
+                          <button
+                            onClick={() => {
+                              const { [member.uid]: _, ...rest } = cardPermissions;
+                              setCardPermissions(rest);
+                            }}
+                            className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                            title="Remover override (herdar do quadro)"
+                          >
+                            <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row gap-6">
             {/* Main Content */}
             <div className="flex-1 space-y-6">
@@ -420,7 +492,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
               <div>
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-                  Sinetes (Tags)
+                  {scribeMode ? 'Sinetes' : 'Tags'}
                 </h3>
                 
                 {/* Selected Tags Display */}
@@ -456,7 +528,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                       setShowTagDropdown(true);
                     }}
                     onFocus={() => setShowTagDropdown(true)}
-                    placeholder="Procurar ou adicionar sinete..."
+                    placeholder={scribeMode ? "Procurar sinete..." : "Procurar tag..."}
                     className="w-full px-3 py-2 bg-theme-surface text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                   
@@ -488,7 +560,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                           ))}
                         {board.tags.filter(tag => !selectedTagIds.includes(tag.id) && tag.name.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
                           <div className="px-3 py-4 text-center text-xs text-theme-secondary italic">
-                            Nenhum sinete encontrado
+                            {scribeMode ? 'Nenhum sinete encontrado' : 'Nenhuma tag encontrada'}
                           </div>
                         )}
                       </div>
