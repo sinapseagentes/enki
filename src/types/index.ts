@@ -3,6 +3,11 @@ export interface UserProfile {
   email: string;
   displayName: string;
   photoURL: string;
+  bio?: string;
+  title?: string; // e.g., "Developer", "Scribe", etc.
+  joinedAt?: number;
+  lastSeen?: number;
+  isOnline?: boolean;
 }
 
 export interface Tag {

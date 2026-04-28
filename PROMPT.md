@@ -237,8 +237,10 @@ Persistido em: `localStorage["@Enki:scribeMode"]`
 3. **Commits:** Seguir Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `style:`, `refactor:`).
 4. **Build/run:** O assistente pode compilar, buildar ou rodar se entender necessário. Solicitar confirmação.
 5. **Documentação:** Manter `README.md`, `BACKLOG.md` e `reportStatus.md` atualizados.
-6. **Testes:** O projeto não possui testes automatizados. Verificação é manual via emuladores Firebase.
+6. **Testes:** O projeto não possui testes automatizados. Verificação é manual via emuladores Firebase. Cada subitem de backlog (feature) deve ter solicitação de verificação
 7. **Firestore Rules:** Arquivo `firestore.rules` na raiz — manter atualizado com novas features.
+8. **BACKLOG.md Rules:** Sempre fazer check após a aprovação de uma feature.
+
 
 ---
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { subscribeToActivities } from "../services/activityService";
 import { subscribeToNotifications, markNotificationAsRead } from "../services/notificationService";
 import { subscribeToMessages, sendMessage } from "../services/messageService";
+import { subscribeToPresence, isUserOnline } from "../services/presenceService";
 import { useAuth } from "../contexts/AuthContext";
 import type { Activity, AppNotification, Message, UserProfile } from "../types";
 
@@ -21,6 +22,7 @@ export const CommandCenter = ({ boardId, members, initialTab = "activities", onC
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedRecipient, setSelectedRecipient] = useState<UserProfile | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [presenceMap, setPresenceMap] = useState<Record<string, any>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,6 +51,16 @@ export const CommandCenter = ({ boardId, members, initialTab = "activities", onC
       return () => unsubscribeMessages();
     }
   }, [user, selectedRecipient, activeTab]);
+
+  useEffect(() => {
+    if (members && members.length > 0) {
+      const memberIds = members.map(m => m.uid);
+      const unsubscribePresence = subscribeToPresence(memberIds, (profiles) => {
+        setPresenceMap(profiles);
+      });
+      return () => unsubscribePresence();
+    }
+  }, [members]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -210,13 +222,16 @@ export const CommandCenter = ({ boardId, members, initialTab = "activities", onC
                         onClick={() => setSelectedRecipient(member)}
                         className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 hover:border-blue-200 transition-all text-left"
                       >
-                        {member.photoURL ? (
-                          <img src={member.photoURL} className="w-10 h-10 rounded-full object-cover" alt="" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase">
-                            {member.displayName.charAt(0)}
-                          </div>
-                        )}
+                        <div className="relative">
+                          {member.photoURL ? (
+                            <img src={member.photoURL} className="w-10 h-10 rounded-full object-cover" alt="" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase">
+                              {member.displayName.charAt(0)}
+                            </div>
+                          )}
+                          <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isUserOnline(presenceMap[member.uid]?.lastSeen, presenceMap[member.uid]?.isOnline) ? 'bg-green-500' : 'bg-gray-400'}`} />
+                        </div>
                         <div>
                           <p className="text-sm font-bold text-gray-800">{member.displayName}</p>
                           <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Clique para conversar</p>

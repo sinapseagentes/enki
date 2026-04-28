@@ -5,6 +5,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { BoardPage } from "./pages/Board";
+import { Profile } from "./pages/Profile";
 import { PrivateRoute } from "./components/PrivateRoute";
 
 function App() {
@@ -20,6 +21,14 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Dashboard />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/profile/:uid" 
+                element={
+                  <PrivateRoute>
+                    <Profile />
                   </PrivateRoute>
                 } 
               />

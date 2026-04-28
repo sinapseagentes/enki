@@ -22,6 +22,7 @@ import { subscribeToLists, createList, updateListOrder } from "../services/listS
 import { subscribeToCards, createCard, updateCard } from "../services/cardService";
 import { subscribeToBoard, getMembersProfile, updateBoardBackground } from "../services/boardService";
 import { logActivity } from "../services/activityService";
+import { subscribeToPresence, isUserOnline } from "../services/presenceService";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { ListContainer } from "../components/ListContainer";
@@ -44,6 +45,7 @@ export const BoardPage = () => {
   const [lists, setLists] = useState<List[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [members, setMembers] = useState<any[]>([]);
+  const [presenceMap, setPresenceMap] = useState<Record<string, any>>({});
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState("");
   const [activeCard, setActiveCard] = useState<Card | null>(null);
@@ -89,6 +91,12 @@ export const BoardPage = () => {
       getMembersProfile(board.members).then(profiles => {
         setMembers(profiles);
       });
+      
+      const unsubscribePresence = subscribeToPresence(board.members, (profiles) => {
+        setPresenceMap(profiles);
+      });
+      
+      return () => unsubscribePresence();
     }
   }, [board?.members]);
 
@@ -486,26 +494,32 @@ export const BoardPage = () => {
           </div>
           
           <div className="flex -space-x-2 ml-2 hidden sm:flex">
-            {members.map((member, i) => (
-              <div 
-                key={member.uid} 
-                className="relative group"
-                style={{ zIndex: members.length - i }}
-              >
-                {member.photoURL ? (
-                  <img 
-                    src={member.photoURL} 
-                    alt={member.displayName}
-                    className="w-8 h-8 rounded-full border-2 border-white/20 object-cover bg-white"
-                    title={member.displayName}
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full border-2 border-white/20 bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold uppercase">
-                    {member.displayName?.charAt(0) || "?"}
-                  </div>
-                )}
-              </div>
-            ))}
+            {members.map((member, i) => {
+              const profileData = presenceMap[member.uid];
+              const online = isUserOnline(profileData?.lastSeen, profileData?.isOnline);
+              return (
+                <div 
+                  key={member.uid} 
+                  className="relative group cursor-pointer"
+                  style={{ zIndex: members.length - i }}
+                  onClick={() => navigate(`/profile/${member.uid}`)}
+                >
+                  {member.photoURL ? (
+                    <img 
+                      src={member.photoURL} 
+                      alt={member.displayName}
+                      className={`w-8 h-8 rounded-full border-2 border-white/20 object-cover bg-white transition-transform group-hover:-translate-y-1 ${online ? 'ring-2 ring-green-400 ring-offset-1 ring-offset-transparent' : ''}`}
+                      title={`${member.displayName} ${online ? '(Online)' : '(Offline)'}`}
+                    />
+                  ) : (
+                    <div className={`w-8 h-8 rounded-full border-2 border-white/20 bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold uppercase transition-transform group-hover:-translate-y-1 ${online ? 'ring-2 ring-green-400 ring-offset-1 ring-offset-transparent' : ''}`} title={`${member.displayName} ${online ? '(Online)' : '(Offline)'}`}>
+                      {member.displayName?.charAt(0) || "?"}
+                    </div>
+                  )}
+                  <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white/50 ${online ? 'bg-green-500' : 'bg-gray-400'}`} />
+                </div>
+              );
+            })}
           </div>
         </div>
 

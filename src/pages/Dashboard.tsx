@@ -7,7 +7,8 @@ import { NotificationBell } from "../components/NotificationBell";
 import { SettingsModal } from "../components/SettingsModal";
 import { createBoard, subscribeToBoards, archiveBoard, restoreBoard, updateBoardTitle } from "../services/boardService";
 import { subscribeToLists } from "../services/listService";
-import { updateDashboardBackground, getUserSettings } from "../services/userService";
+import { updateDashboardBackground, getUserSettings, getUserProfile } from "../services/userService";
+import { isUserOnline } from "../services/presenceService";
 import { COLORS, GRADIENTS } from "../constants/design";
 import type { Board, List } from "../types";
 
@@ -149,6 +150,7 @@ export const Dashboard = () => {
   const [dashboardBg, setDashboardBg] = useState<string>("");
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [userProfileData, setUserProfileData] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -161,6 +163,10 @@ export const Dashboard = () => {
       if (settings?.dashboardBackground) {
         setDashboardBg(settings.dashboardBackground);
       }
+    });
+
+    getUserProfile(user.uid).then(profile => {
+      setUserProfileData(profile);
     });
 
     return () => unsubscribe();
@@ -305,9 +311,12 @@ export const Dashboard = () => {
             )}
           </div>
 
-          <span className="text-sm font-medium hidden sm:block">{user?.displayName}</span>
+          <button onClick={() => navigate(`/profile/${user?.uid}`)} className="text-sm font-medium hidden sm:block hover:underline">{user?.displayName}</button>
           {user?.photoURL && (
-            <img src={user.photoURL} alt="Avatar" className="w-8 h-8 rounded-full border-2 border-white/30" />
+            <div className="relative cursor-pointer" onClick={() => navigate(`/profile/${user.uid}`)}>
+              <img src={user.photoURL} alt="Avatar" className="w-8 h-8 rounded-full border-2 border-white/30 hover:border-white transition-colors" />
+              <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white ${isUserOnline(userProfileData?.lastSeen, userProfileData?.isOnline) ? 'bg-green-500' : 'bg-gray-400'}`} title="Seu Status" />
+            </div>
           )}
           <button 
             onClick={logout}

@@ -53,11 +53,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
+      if (user) {
+        try {
+          const { updatePresence } = await import("../services/presenceService");
+          await updatePresence(user.uid, false);
+        } catch (e) {
+          console.error("Error setting offline status on logout", e);
+        }
+      }
       await signOut(auth);
     } catch (error) {
       console.error("Error signing out", error);
     }
   };
+
+  useEffect(() => {
+    let heartbeatInterval: ReturnType<typeof setInterval>;
+
+    if (user) {
+      const startHeartbeat = async () => {
+        const { updatePresence } = await import("../services/presenceService");
+        
+        // Initial heartbeat
+        updatePresence(user.uid, true);
+
+        // Regular heartbeat every 60 seconds
+        heartbeatInterval = setInterval(() => {
+          updatePresence(user.uid, true);
+        }, 60000);
+      };
+
+      startHeartbeat();
+
+      // Handle beforeunload to mark offline
+      const handleBeforeUnload = () => {
+        // We use a synchronous XMLHttpRequest here or just navigator.sendBeacon if possible, 
+        // but simple async update Doc might not finish in time.
+        // We'll rely on timeout for unexpected disconnects.
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
+      return () => {
+        clearInterval(heartbeatInterval);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout }}>

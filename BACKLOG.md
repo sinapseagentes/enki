@@ -55,15 +55,22 @@ Este arquivo rastreia o desenvolvimento do Enki seguindo as regras de versioname
 
 ---
 
+## 🟢 Backlog 12 (Hub Social - O Grande Zigurate) - [ENTREGUE]
+
+*Status: Concluído | Versão: V12.4.0.0*
+
+1. **Feature 12.1.0.0:** [x] Modelo de Perfil Expandido (`UserProfile` com bio, title, etc).
+2. **Feature 12.2.0.0:** [x] Página de Perfil personalizada com métricas de usuário.
+3. **Feature 12.3.0.0:** [x] Motor de Presença Real-Time via heartbeat e Firestore.
+4. **Feature 12.4.0.0:** [x] Indicadores visuais de presença (Navbar, Board, CommandCenter).
+
+---
+
 ## 🔴 Próximos Backlogs (Planejados)
 
-1. **Backlog 12 (Hub Social - O Grande Zigurate):** V12.0.0.0
-   - Perfis de Usuários: Página de perfil personalizada (com estatísticas de "Escribas").
-   - Presença em Real-Time: Ver quem está online na Tábua (indicadores de presença).
-
-2. **Backlog 13 (Visões Supremos - Dashboards & Gráficos):** V13.0.0.0
+1. **Backlog 13 (Visões Supremos - Dashboards & Gráficos):** V13.0.0.0
    - Gráficos de produtividade (quantos Selos criados/concluídos por período).
    - Visualização de Calendário para prazos (Decretos com data).
 
-3. **Backlog 14 (Mobile Mastery - PWA):** V14.0.0.0
+2. **Backlog 14 (Mobile Mastery - PWA):** V14.0.0.0
    - Refinamento total para uso em dispositivos móveis (gestos de swipe no Scribe Mode).
