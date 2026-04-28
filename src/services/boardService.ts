@@ -73,6 +73,11 @@ export const updateBoardTags = async (boardId: string, tags: Tag[]) => {
   await updateDoc(boardRef, { tags });
 };
 
+export const updateBoardPermissions = async (boardId: string, permissions: { [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer' }) => {
+  const boardRef = doc(db, BOARDS_COLLECTION, boardId);
+  await updateDoc(boardRef, { permissions });
+};
+
 
 export const subscribeToBoard = (boardId: string, callback: (board: Board) => void) => {
   const boardRef = doc(db, BOARDS_COLLECTION, boardId);

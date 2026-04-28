@@ -40,6 +40,7 @@ Este arquivo rastreia o desenvolvimento do Ollert seguindo as regras de versiona
 2. **Feature 10.2.0.0:** [x] Adicionar campo permissions ao Board com mapeamento userId -> nível.
 3. **Feature 10.3.0.0:** [x] Atualizar createBoard para definir owner como 'owner'.
 4. **Feature 10.4.0.0:** [x] Atualizar inviteUserToBoard para definir convidado como 'editor'.
+5. **Feature 10.5.0.0:** [x] Implementar interface de gerenciamento de permissões no SettingsModal.
 
 ---
 
