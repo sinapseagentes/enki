@@ -233,9 +233,9 @@ Persistido em: `localStorage["@Enki:scribeMode"]`
 ## Regras de Desenvolvimento
 
 1. **SCRUM:** Seguir os backlogs numerados. Cada feature tem um número `Vx.y.z.k`.
-2. **Git:** Antes de cada feature: `git add .` → `git commit -m "..."` → `git tag Vx.y.z.k`.
+2. **Git:** Antes de cada feature e após confirmação de funcionalidade aceita pelo usuário: `git add .` → `git commit -m "..."` → `git tag Vx.y.z.k`.
 3. **Commits:** Seguir Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `style:`, `refactor:`).
-4. **Sem build/run:** O assistente NÃO deve compilar, buildar ou rodar. Apenas orientar.
+4. **Build/run:** O assistente pode compilar, buildar ou rodar se entender necessário. Solicitar confirmação.
 5. **Documentação:** Manter `README.md`, `BACKLOG.md` e `reportStatus.md` atualizados.
 6. **Testes:** O projeto não possui testes automatizados. Verificação é manual via emuladores Firebase.
 7. **Firestore Rules:** Arquivo `firestore.rules` na raiz — manter atualizado com novas features.
