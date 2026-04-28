@@ -22,13 +22,16 @@ export const createCard = async (boardId: string, listId: string, title: string,
     title,
     order,
     createdAt: Date.now(),
-    permissions: undefined,
   };
 
   const docRef = await addDoc(collection(db, CARDS_COLLECTION), newCard);
   
   // Trigger automation
-  executeAutomations(boardId, 'card_created', { ...newCard, id: docRef.id });
+  try {
+    await executeAutomations(boardId, 'card_created', { ...newCard, id: docRef.id });
+  } catch (error) {
+    console.error("Failed to execute automations:", error);
+  }
   
   return docRef.id;
 };
