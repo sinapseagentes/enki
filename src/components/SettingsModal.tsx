@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "../contexts/ThemeContext";
-import type { Tag, Board } from "../types";
-import { updateBoardTags, updateBoardPermissions } from "../services/boardService";
+import type { Tag, Board, UserProfile } from "../types";
+import { updateBoardTags, updateBoardPermissions, getMembersProfile } from "../services/boardService";
 import { COLORS } from "../constants/design";
 
 interface SettingsModalProps {
@@ -13,6 +13,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, board }) 
   const { theme, toggleTheme, scribeMode, toggleScribeMode } = useTheme();
   const [newTagName, setNewTagName] = useState("");
   const [selectedColor, setSelectedColor] = useState(COLORS[0].value);
+  const [memberProfiles, setMemberProfiles] = useState<UserProfile[]>([]);
+
+  useEffect(() => {
+    if (!board?.id) return;
+    const fetchMembers = async () => {
+      if (!board.members || board.members.length === 0) {
+        setMemberProfiles([]);
+        return;
+      }
+      const profiles = await getMembersProfile(board.members);
+      setMemberProfiles(profiles);
+    };
+    fetchMembers();
+  }, [board]);
 
   const handleAddTag = async () => {
     if (!board?.id || !newTagName.trim()) return;
@@ -152,51 +166,55 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, board }) 
             <section>
               <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">{scribeMode ? 'Hierarquia de Ur' : 'Gerenciar Permissões'}</h3>
               <div className="space-y-4">
-                {board.permissions && Object.entries(board.permissions).map(([userId, permission]) => (
-                  <div key={userId} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-white/10">
-                    <div className="flex items-center gap-3">
-                      {/* User Avatar/Initials */}
-                      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-bold">
-                        {userId.substring(0, 2).toUpperCase()}
+                {board.permissions && Object.entries(board.permissions).map(([userId, permission]) => {
+                  const member = memberProfiles.find(m => m.uid === userId);
+                  const displayName = member?.displayName || userId;
+                  return (
+                    <div key={userId} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-white/10">
+                      <div className="flex items-center gap-3">
+                        {/* User Avatar/Initials */}
+                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-bold">
+                          {displayName.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-700 dark:text-gray-200">{displayName}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{permission}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-700 dark:text-gray-200">Usuário {userId.substring(0, 8)}...</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{permission}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handlePermissionChange(userId, 'owner')}
+                          className={`px-2 py-1 rounded text-xs font-medium transition-all ${permission === 'owner' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}
+                          disabled={permission === 'owner' && Object.values(board.permissions || {}).filter(p => p === 'owner').length <= 1}
+                          title={permission === 'owner' && Object.values(board.permissions || {}).filter(p => p === 'owner').length <= 1 ? 'Deixar apenas um owner' : 'Definir como Dono'}
+                        >
+                          Dono
+                        </button>
+                        <button
+                          onClick={() => handlePermissionChange(userId, 'admin')}
+                          className={`px-2 py-1 rounded text-xs font-medium transition-all ${permission === 'admin' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'}`}
+                          title={permission === 'admin' ? 'Definir como Administrador' : 'Definir como Administrador'}
+                        >
+                          Admin
+                        </button>
+                        <button
+                          onClick={() => handlePermissionChange(userId, 'editor')}
+                          className={`px-2 py-1 rounded text-xs font-medium transition-all ${permission === 'editor' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
+                          title={permission === 'editor' ? 'Definir como Editor' : 'Definir como Editor'}
+                        >
+                          Editor
+                        </button>
+                        <button
+                          onClick={() => handlePermissionChange(userId, 'viewer')}
+                          className={`px-2 py-1 rounded text-xs font-medium transition-all ${permission === 'viewer' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                          title={permission === 'viewer' ? 'Definir como Visualizador' : 'Definir como Visualizador'}
+                        >
+                          Viewer
+                        </button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handlePermissionChange(userId, 'owner')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-all ${permission === 'owner' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}
-                        disabled={permission === 'owner' && Object.values(board.permissions || {}).filter(p => p === 'owner').length <= 1}
-                        title={permission === 'owner' && Object.values(board.permissions || {}).filter(p => p === 'owner').length <= 1 ? 'Deixar apenas um owner' : 'Definir como Dono'}
-                      >
-                        Dono
-                      </button>
-                      <button
-                        onClick={() => handlePermissionChange(userId, 'admin')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-all ${permission === 'admin' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'}`}
-                        title={permission === 'admin' ? 'Definir como Administrador' : 'Definir como Administrador'}
-                      >
-                        Admin
-                      </button>
-                      <button
-                        onClick={() => handlePermissionChange(userId, 'editor')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-all ${permission === 'editor' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
-                        title={permission === 'editor' ? 'Definir como Editor' : 'Definir como Editor'}
-                      >
-                        Editor
-                      </button>
-                      <button
-                        onClick={() => handlePermissionChange(userId, 'viewer')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-all ${permission === 'viewer' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                        title={permission === 'viewer' ? 'Definir como Visualizador' : 'Definir como Visualizador'}
-                      >
-                        Viewer
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}

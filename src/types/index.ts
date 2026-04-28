@@ -82,15 +82,18 @@ export interface Card {
   boardId: string;
   title: string;
   description?: string;
-  colorLabel?: string; 
+  colorLabel?: string;
   tagIds?: string[];
-  dueDate?: number;    
+  dueDate?: number;
   checklists?: ChecklistItem[];
   attachments?: Attachment[];
   coverUrl?: string;
   order: number;
   archived?: boolean;
   createdAt: number;
+  permissions?: {
+    [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer';
+  }; // Permission levels for card access (overrides board permissions)
 }
 
 export interface Message {

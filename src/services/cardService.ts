@@ -22,6 +22,7 @@ export const createCard = async (boardId: string, listId: string, title: string,
     title,
     order,
     createdAt: Date.now(),
+    permissions: undefined,
   };
 
   const docRef = await addDoc(collection(db, CARDS_COLLECTION), newCard);
