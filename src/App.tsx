@@ -6,6 +6,7 @@ import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { BoardPage } from "./pages/Board";
 import { Profile } from "./pages/Profile";
+import { AdminPanel } from "./pages/AdminPanel";
 import { PrivateRoute } from "./components/PrivateRoute";
 
 function App() {
@@ -21,6 +22,14 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Dashboard />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/admin" 
+                element={
+                  <PrivateRoute>
+                    <AdminPanel />
                   </PrivateRoute>
                 } 
               />

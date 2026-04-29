@@ -6,10 +6,11 @@ import { archiveCard, restoreCard } from "../services/cardService";
 interface CardItemProps {
   card: Card & { isFilteredOut?: boolean };
   tags?: Tag[];
+  currentUserProfile?: any;
   onClick: () => void;
 }
 
-export const CardItem = ({ card, tags, onClick }: CardItemProps) => {
+export const CardItem = ({ card, tags, currentUserProfile, onClick }: CardItemProps) => {
   const {
     attributes,
     listeners,
@@ -161,6 +162,34 @@ export const CardItem = ({ card, tags, onClick }: CardItemProps) => {
           </button>
         </div>
       </div>
+
+      {/* Storage limit progress bar (Option A: relative to logged-in user limit) */}
+      {currentUserProfile?.storageLimit && currentUserProfile.storageLimit > 0 && (card.storageMetrics?.byUser?.[currentUserProfile.uid] || 0) > 0 && (
+        <div className="px-3 pb-2 pt-1 border-t border-gray-50 bg-gray-50/50">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[9px] font-bold text-gray-500 uppercase">Seu Consumo</span>
+            <span className="text-[10px] font-bold text-blue-600">
+              {(() => {
+                const bytes = card.storageMetrics?.byUser?.[currentUserProfile.uid] || 0;
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+              })()}
+              <span className="text-gray-400 font-normal ml-1">
+                ({Math.min(100, Math.round(((card.storageMetrics?.byUser?.[currentUserProfile.uid] || 0) / currentUserProfile.storageLimit) * 100))}%)
+              </span>
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-1 overflow-hidden">
+            <div 
+              className={`h-1 rounded-full ${Math.min(100, Math.round(((card.storageMetrics?.byUser?.[currentUserProfile.uid] || 0) / currentUserProfile.storageLimit) * 100)) > 90 ? 'bg-red-500' : 'bg-blue-500'}`} 
+              style={{ width: `${Math.min(100, Math.round(((card.storageMetrics?.byUser?.[currentUserProfile.uid] || 0) / currentUserProfile.storageLimit) * 100))}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

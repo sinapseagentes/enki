@@ -15,13 +15,14 @@ export const getCard = async (cardId: string): Promise<Card | null> => {
   return null;
 };
 
-export const createCard = async (boardId: string, listId: string, title: string, order: number): Promise<string> => {
+export const createCard = async (boardId: string, listId: string, title: string, order: number, creatorId?: string): Promise<string> => {
   const newCard: Card = {
     boardId,
     listId,
     title,
     order,
     createdAt: Date.now(),
+    ...(creatorId ? { permissions: { [creatorId]: 'owner' } } : {})
   };
 
   const docRef = await addDoc(collection(db, CARDS_COLLECTION), newCard);

@@ -237,11 +237,18 @@ export const BoardPage = () => {
   };
 
   const handleAddCard = async (listId: string, title: string) => {
-    if (!boardId) return;
+    if (!boardId) {
+      alert("Erro: Board não encontrado.");
+      return;
+    }
+    if (!user) {
+      alert("Erro: Você precisa estar logado para criar um cartão.");
+      return;
+    }
     try {
       const listCards = cards.filter(c => c.listId === listId);
       const order = listCards.length;
-      await createCard(boardId, listId, title, order);
+      await createCard(boardId, listId, title, order, user.uid);
 
       if (user) {
         await logActivity({
@@ -252,8 +259,9 @@ export const BoardPage = () => {
           details: { cardTitle: title }
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating card:", error);
+      alert(`Falha ao criar o cartão. Motivo: ${error.message || "Erro desconhecido"}`);
     }
   };
 
@@ -285,6 +293,8 @@ export const BoardPage = () => {
         };
       });
   };
+
+  const currentUserProfile = members.find(m => m.uid === user?.uid);
 
   return (
     <div 
@@ -644,8 +654,10 @@ export const BoardPage = () => {
                   key={list.id} 
                   list={list} 
                   cards={getFilteredCards(list.id!)} 
+                  tags={board?.tags}
                   onAddCard={handleAddCard}
                   onCardClick={setActiveCard}
+                  currentUserProfile={currentUserProfile}
                 />
               ))}
             </SortableContext>

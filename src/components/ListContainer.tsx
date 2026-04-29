@@ -12,9 +12,10 @@ interface ListContainerProps {
   tags?: Tag[];
   onAddCard: (listId: string, title: string) => void;
   onCardClick: (card: Card) => void;
+  currentUserProfile?: any;
 }
 
-export const ListContainer = ({ list, cards, tags, onAddCard, onCardClick }: ListContainerProps) => {
+export const ListContainer = ({ list, cards, tags, onAddCard, onCardClick, currentUserProfile }: ListContainerProps) => {
 
   const { scribeMode } = useTheme();
   const {
@@ -158,6 +159,7 @@ export const ListContainer = ({ list, cards, tags, onAddCard, onCardClick }: Lis
                   key={card.id} 
                   card={card} 
                   tags={tags}
+                  currentUserProfile={currentUserProfile}
                   onClick={() => onCardClick(card)} 
                 />
               ))}

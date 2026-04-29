@@ -13,6 +13,8 @@ export interface UserProfile {
   joinedAt?: number;
   lastSeen?: number;
   isOnline?: boolean;
+  role?: 'admin' | 'user'; // Global role for the platform
+  storageLimit?: number; // Storage quota in bytes (e.g. 50 * 1024 * 1024 for 50MB)
   storageMetrics?: { totalBytes: number }; // How much total storage this user consumes across all boards
 }
 

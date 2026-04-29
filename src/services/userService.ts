@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { UserProfile } from "../types";
 
@@ -34,10 +34,42 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       title: data.title || '',
       joinedAt: data.joinedAt || data.lastLogin || Date.now(),
       lastSeen: data.lastSeen,
-      isOnline: data.isOnline
+      isOnline: data.isOnline,
+      role: data.role || 'user',
+      storageLimit: data.storageLimit,
+      storageMetrics: data.storageMetrics
     };
   }
   return null;
+};
+
+// Admin only function
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+  const usersRef = collection(db, USERS_COLLECTION);
+  const snap = await getDocs(usersRef);
+  return snap.docs.map(doc => {
+    const data = doc.data();
+    return {
+      uid: doc.id,
+      email: data.email || '',
+      displayName: data.displayName || 'Usuário Anônimo',
+      photoURL: data.photoURL || '',
+      role: data.role || 'user',
+      storageLimit: data.storageLimit,
+      storageMetrics: data.storageMetrics,
+      isOnline: data.isOnline
+    } as UserProfile;
+  });
+};
+
+export const deleteUserDocument = async (userId: string) => {
+  const userRef = doc(db, USERS_COLLECTION, userId);
+  await deleteDoc(userRef);
+};
+
+export const updateUserRoleAndLimit = async (userId: string, role: 'admin' | 'user', storageLimit: number) => {
+  const userRef = doc(db, USERS_COLLECTION, userId);
+  await setDoc(userRef, { role, storageLimit }, { merge: true });
 };
 
 export const updateUserProfile = async (userId: string, data: Partial<UserProfile>) => {
