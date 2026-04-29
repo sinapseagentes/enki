@@ -32,6 +32,8 @@ import { InviteModal } from "../components/InviteModal";
 import { SettingsModal } from "../components/SettingsModal";
 import { AutomationModal } from "../components/AutomationModal";
 import { CommandCenter } from "../components/CommandCenter";
+import { TableView } from "../components/TableView";
+import { CalendarView } from "../components/CalendarView";
 import type { List, Card, Board } from "../types";
 import { COLORS, GRADIENTS } from "../constants/design";
 
@@ -63,6 +65,7 @@ export const BoardPage = () => {
   const [filterTagSearch, setFilterTagSearch] = useState("");
   const [showFilterTagDropdown, setShowFilterTagDropdown] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [viewMode, setViewMode] = useState<'kanban' | 'table' | 'calendar'>('kanban');
 
   useEffect(() => {
     if (!boardId) return;
@@ -270,9 +273,9 @@ export const BoardPage = () => {
   const isGradient = currentBg.startsWith("from-");
 
   // Filter Logic
-  const getFilteredCards = (listId: string) => {
+  const getFilteredCards = (listId?: string) => {
     return cards
-      .filter(c => c.listId === listId)
+      .filter(c => !listId || c.listId === listId)
       .map(card => {
         const matchesText = card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            (card.description?.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -321,6 +324,31 @@ export const BoardPage = () => {
           <h1 className="font-bold text-lg hidden lg:block truncate max-w-[150px]">
             {board?.title || (scribeMode ? "Invocando Escriba..." : "Carregando...")}
           </h1>
+
+          {/* View Switcher (Oráculo) */}
+          <div className="flex bg-black/20 backdrop-blur-sm p-1 rounded-lg border border-white/10 ml-2">
+            <button 
+              onClick={() => setViewMode('kanban')}
+              className={`p-1.5 rounded transition-all ${viewMode === 'kanban' ? 'bg-white text-blue-600 shadow-md' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+              title="Quadro Kanban"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 01-2-2h-2a2 2 0 01-2 2" /></svg>
+            </button>
+            <button 
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded transition-all ${viewMode === 'table' ? 'bg-white text-blue-600 shadow-md' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+              title="Visão de Tabela"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+            </button>
+            <button 
+              onClick={() => setViewMode('calendar')}
+              className={`p-1.5 rounded transition-all ${viewMode === 'calendar' ? 'bg-white text-blue-600 shadow-md' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+              title="Visão de Calendário"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            </button>
+          </div>
 
           {/* Board Search Bar */}
           <div className="relative group ml-2">
@@ -644,64 +672,89 @@ export const BoardPage = () => {
           onDragOver={onDragOver}
           onDragEnd={onDragEnd}
         >
-          <div className="flex items-start gap-4 h-full">
-            <SortableContext
-              items={lists.map((l) => l.id!)}
-              strategy={horizontalListSortingStrategy}
-            >
-              {lists.map((list) => (
-                <ListContainer 
-                  key={list.id} 
-                  list={list} 
-                  cards={getFilteredCards(list.id!)} 
-                  tags={board?.tags}
-                  onAddCard={handleAddCard}
-                  onCardClick={setActiveCard}
-                  currentUserProfile={currentUserProfile}
-                />
-              ))}
-            </SortableContext>
-
-            {/* Add List Button */}
-            <div className="w-72 shrink-0">
-              {!isAddingList ? (
-                <button
-                  onClick={() => setIsAddingList(true)}
-                  className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold p-3 rounded-lg flex items-center gap-2 transition-all"
+          <div className="flex-1 flex overflow-x-auto overflow-y-hidden p-4 items-start gap-4 custom-scrollbar">
+            {viewMode === 'kanban' && (
+              <>
+                <SortableContext
+                  items={lists.map((l) => l.id!)}
+                  strategy={horizontalListSortingStrategy}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                  {scribeMode ? "Adicionar Coluna de Ur" : "Adicionar outra lista"}
-                </button>
-              ) : (
-                <div className="bg-theme-surface p-3 rounded-lg shadow-xl border border-theme animate-in fade-in slide-in-from-top-2 duration-200">
-                  <form onSubmit={handleAddList}>
-                    <input
-                      autoFocus
-                      type="text"
-                      placeholder={scribeMode ? "Título da Coluna..." : "Insira o título da lista..."}
-                      value={newListTitle}
-                      onChange={(e) => setNewListTitle(e.target.value)}
-                      className="w-full px-3 py-2 bg-theme-card text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  {lists.map((list) => (
+                    <ListContainer 
+                      key={list.id} 
+                      list={list} 
+                      cards={getFilteredCards(list.id!)} 
+                      tags={board?.tags}
+                      onAddCard={handleAddCard}
+                      onCardClick={setActiveCard}
+                      currentUserProfile={currentUserProfile}
+                      customFieldDefinitions={board?.customFieldDefinitions}
                     />
-                    <div className="flex items-center gap-2 mt-3">
-                      <button
-                        type="submit"
-                        className="bg-blue-600 text-white text-sm px-4 py-1.5 rounded-md hover:bg-blue-700 font-semibold shadow-sm transition-all"
-                      >
-                        {scribeMode ? "Erguer Coluna" : "Adicionar lista"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsAddingList(false)}
-                        className="text-theme-secondary hover:text-theme-main p-1.5 transition-colors"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
+                  ))}
+                </SortableContext>
+
+                {/* Add List Button */}
+                <div className="w-72 shrink-0">
+                  {!isAddingList ? (
+                    <button
+                      onClick={() => setIsAddingList(true)}
+                      className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold p-3 rounded-lg flex items-center gap-2 transition-all"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      {scribeMode ? "Adicionar Coluna de Ur" : "Adicionar outra lista"}
+                    </button>
+                  ) : (
+                    <div className="bg-theme-surface p-3 rounded-lg shadow-xl border border-theme animate-in fade-in slide-in-from-top-2 duration-200">
+                      <form onSubmit={handleAddList}>
+                        <input
+                          autoFocus
+                          type="text"
+                          placeholder={scribeMode ? "Título da Coluna..." : "Insira o título da lista..."}
+                          value={newListTitle}
+                          onChange={(e) => setNewListTitle(e.target.value)}
+                          className="w-full px-3 py-2 bg-theme-card text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                        <div className="flex items-center gap-2 mt-3">
+                          <button
+                            type="submit"
+                            className="bg-blue-600 text-white text-sm px-4 py-1.5 rounded-md hover:bg-blue-700 font-semibold shadow-sm transition-all"
+                          >
+                            {scribeMode ? "Erguer Coluna" : "Adicionar lista"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingList(false)}
+                            className="text-theme-secondary hover:text-theme-main p-1.5 transition-colors"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+                      </form>
                     </div>
-                  </form>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
+
+            {viewMode === 'table' && board && (
+              <TableView 
+                cards={getFilteredCards()} 
+                lists={lists} 
+                board={board}
+                tags={board.tags}
+                onCardClick={setActiveCard}
+                scribeMode={scribeMode}
+              />
+            )}
+
+            {viewMode === 'calendar' && board && (
+              <CalendarView 
+                cards={getFilteredCards()} 
+                board={board}
+                onCardClick={setActiveCard}
+                scribeMode={scribeMode}
+              />
+            )}
           </div>
 
           <DragOverlay>
@@ -749,7 +802,12 @@ export const BoardPage = () => {
       )}
 
       {showSettings && (
-        <SettingsModal board={board || undefined} onClose={() => setShowSettings(false)} />
+        <SettingsModal 
+          board={board || undefined} 
+          cards={cards} 
+          lists={lists}
+          onClose={() => setShowSettings(false)} 
+        />
       )}
       
       {showAutomationModal && boardId && (

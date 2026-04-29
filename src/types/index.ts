@@ -18,6 +18,17 @@ export interface UserProfile {
   storageMetrics?: { totalBytes: number }; // How much total storage this user consumes across all boards
 }
 
+export type CustomFieldType = 'text' | 'number' | 'date' | 'select' | 'checkbox';
+
+export interface CustomFieldDefinition {
+  id: string;
+  name: string;
+  type: CustomFieldType;
+  options?: string[]; // Only for 'select'
+  suffix?: string; // e.g. 'h', 'pts', '$'
+  showOnCover?: boolean;
+}
+
 export interface Tag {
   id: string;
   name: string;
@@ -38,6 +49,7 @@ export interface Board {
   createdAt: number;
   updatedAt: number;
   storageMetrics?: StorageMetrics; // Storage used by this board
+  customFieldDefinitions?: CustomFieldDefinition[];
 }
 
 export interface List {
@@ -48,6 +60,8 @@ export interface List {
   archived?: boolean;
   createdAt: number;
   storageMetrics?: StorageMetrics; // Storage used by this list
+  color?: string;
+  isCollapsed?: boolean;
 }
 
 export interface ChecklistItem {
@@ -112,6 +126,7 @@ export interface Card {
     [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer';
   }; // Permission levels for card access (overrides board permissions)
   storageMetrics?: StorageMetrics; // Storage used by this card
+  customFieldValues?: Record<string, any>; // fieldId -> value
 }
 
 export interface Message {

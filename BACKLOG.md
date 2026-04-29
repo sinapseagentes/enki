@@ -76,25 +76,55 @@ Este arquivo rastreia o desenvolvimento do Enki seguindo as regras de versioname
 
 ---
 
+## 🟢 Backlog 14 (Campos Ancestrais - Custom Fields) - [ENTREGUE]
+
+*Status: Concluído | Versão: V14.0.0.0*
+
+- [x] Criação de campos personalizados (Texto, Número, Data, Checkbox, Seleção) por Quadro.
+- [x] Suporte a Sufixos/Unidades (ex: h, pts, R$).
+- [x] Exibição dos campos na capa do cartão (Custom Badges).
+
+## 🟢 Backlog 15 (Visões de Oráculo - Calendar & Table) - [ENTREGUE]
+
+*Status: Concluído | Versão: V15.0.0.0*
+
+- [x] Alternador de Oráculo (View Switcher) na barra superior.
+- [x] Visão de Tabela (Grid) com colunas dinâmicas para Custom Fields.
+- [x] Visão de Calendário (Grade Mensal) com suporte a Scribe Mode.
+
+---
+
+## 🟢 Backlog 16.1 (Sincronização Ancestral - iCal) - [ENTREGUE]
+
+*Status: Concluído | Versão: V16.1.0.0*
+
+- [x] Exportação manual de arquivo iCal (.ics) seguindo RFC 5545.
+- [x] Nova interface de abas no Modal de Configurações para organização de recursos.
+
+## 🟢 Backlog 17.1 (Caminho da Liberdade - Portabilidade & UI) - [ENTREGUE]
+
+*Status: Concluído | Versão: V17.1.0.0*
+
+- [x] Exportação de dados do quadro em JSON (Backup Completo).
+- [x] Exportação de cartões em CSV (Compatível com Excel/Sheets, incluindo Custom Fields).
+- [x] Personalização visual: Cores para listas (Sinetes de Cor).
+- [x] Otimização de Espaço: Opção de colapsar colunas no Kanban.
+
+---
+
 ## 🔴 Próximos Backlogs (Planejados)
 
-1. **Backlog 14 (Campos Ancestrais - Custom Fields):** V14.0.0.0
-   - Criação de campos personalizados (Texto, Data, Checkbox) por Quadro.
-   - Exibição dos campos na capa do cartão.
+1. **Backlog 16.2+ (Conexão com o Mundo Exterior):** V16.2.0.0
+   - Implementação de iCal Feed (Link Dinâmico).
+   - Integração com Google Calendar API (Visualização de eventos externos).
 
-2. **Backlog 15 (Visões de Oráculo - Calendar & Table):** V15.0.0.0
-   - Visualização de Calendário para datas de entrega.
-   - Visualização em Tabela (estilo planilha) para edição em massa.
-
-3. **Backlog 16 (Caminho da Liberdade - Export & UI Polish):** V16.0.0.0
-   - Exportação de dados do quadro em JSON/CSV.
+2. **Backlog 17.2 (Caminho da Liberdade - Filtros):** V17.2.0.0
    - Filtros persistentes (Saved Searches).
-   - Cores para listas e opção de colapsar colunas.
 
-4. **Backlog 17 (Mobile Mastery - PWA):** V17.0.0.0
+3. **Backlog 18 (Mobile Mastery - PWA):** V18.0.0.0
    - Refinamento total para uso em dispositivos móveis (gestos de swipe).
    - Configuração de Manifesto PWA para instalação como App nativo.
 
-5. **Backlog ∞ (Lojas Nativas - App Stores):** V∞
+4. **Backlog ∞ (Lojas Nativas - App Stores):** V∞
    - Integração do Capacitor para empacotar o código web.
    - Compilação do binário `.ipa` para Apple App Store e `.aab` para Google Play Store.

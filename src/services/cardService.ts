@@ -70,6 +70,11 @@ export const updateCard = async (cardId: string, updates: Partial<Card>) => {
   }
 };
 
+export const updateCardCustomFields = async (cardId: string, customFieldValues: Record<string, any>) => {
+  const cardRef = doc(db, CARDS_COLLECTION, cardId);
+  await updateDoc(cardRef, { customFieldValues });
+};
+
 export const archiveCard = async (cardId: string) => {
   const cardRef = doc(db, CARDS_COLLECTION, cardId);
   await updateDoc(cardRef, { archived: true });

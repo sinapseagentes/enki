@@ -63,6 +63,11 @@ export const updateListTitle = async (listId: string, title: string) => {
   await updateDoc(listRef, { title });
 };
 
+export const updateList = async (listId: string, data: Partial<List>) => {
+  const listRef = doc(db, LISTS_COLLECTION, listId);
+  await updateDoc(listRef, data);
+};
+
 export const archiveList = async (listId: string) => {
   const listRef = doc(db, LISTS_COLLECTION, listId);
   await updateDoc(listRef, { archived: true });

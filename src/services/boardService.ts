@@ -1,7 +1,7 @@
 import { collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc, updateDoc, arrayUnion, getDocs } from "firebase/firestore";
 import type { DocumentData, QuerySnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import type { Board, Tag } from "../types";
+import type { Board, Tag, CustomFieldDefinition } from "../types";
 
 const BOARDS_COLLECTION = "boards";
 const USERS_COLLECTION = "users";
@@ -76,6 +76,11 @@ export const updateBoardTags = async (boardId: string, tags: Tag[]) => {
 export const updateBoardPermissions = async (boardId: string, permissions: { [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer' }) => {
   const boardRef = doc(db, BOARDS_COLLECTION, boardId);
   await updateDoc(boardRef, { permissions });
+};
+
+export const updateBoardCustomFields = async (boardId: string, customFieldDefinitions: CustomFieldDefinition[]) => {
+  const boardRef = doc(db, BOARDS_COLLECTION, boardId);
+  await updateDoc(boardRef, { customFieldDefinitions, updatedAt: Date.now() });
 };
 
 

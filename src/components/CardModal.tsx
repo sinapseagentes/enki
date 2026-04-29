@@ -58,6 +58,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [cardPermissions, setCardPermissions] = useState<{ [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer' }>(card.permissions || {});
   const [showPermissions, setShowPermissions] = useState(false);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(card.customFieldValues || {});
 
   const toggleTag = (tagId: string) => {
     setSelectedTagIds(prev => 
@@ -129,6 +130,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
         attachments,
         coverUrl,
         permissions: Object.keys(cardPermissions).length > 0 ? cardPermissions : undefined,
+        customFieldValues,
       });
       showNotification("Cartão atualizado com sucesso!");
       onClose();
@@ -592,6 +594,79 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                   className="w-full h-32 px-3 py-2 bg-theme-surface text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
                 />
               </div>
+
+              {/* Custom Fields Section */}
+              {board?.customFieldDefinitions && board.customFieldDefinitions.length > 0 && (
+                <div className="bg-gray-50 dark:bg-slate-800/40 p-4 rounded-xl border border-gray-100 dark:border-white/5 space-y-4">
+                  <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    {scribeMode ? 'Atributos de Ur' : 'Campos Personalizados'}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {board.customFieldDefinitions.map(field => (
+                      <div key={field.id} className="space-y-1">
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                          {field.name} {field.suffix && <span className="lowercase text-gray-400">({field.suffix})</span>}
+                        </label>
+                        {field.type === 'text' && (
+                          <div className="relative flex items-center">
+                            <input 
+                              type="text" 
+                              value={customFieldValues[field.id] || ""}
+                              onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.value})}
+                              placeholder="..."
+                              className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-white"
+                            />
+                            {field.suffix && <span className="absolute right-3 text-xs text-gray-400 font-medium">{field.suffix}</span>}
+                          </div>
+                        )}
+                        {field.type === 'number' && (
+                          <div className="relative flex items-center">
+                            <input 
+                              type="number" 
+                              value={customFieldValues[field.id] || ""}
+                              onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.value})}
+                              className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-white"
+                            />
+                            {field.suffix && <span className="absolute right-3 text-xs text-gray-400 font-medium">{field.suffix}</span>}
+                          </div>
+                        )}
+                        {field.type === 'date' && (
+                          <input 
+                            type="date" 
+                            value={customFieldValues[field.id] || ""}
+                            onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.value})}
+                            className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-white"
+                          />
+                        )}
+                        {field.type === 'select' && (
+                          <select 
+                            value={customFieldValues[field.id] || ""}
+                            onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.value})}
+                            className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-white"
+                          >
+                            <option value="">Nenhum</option>
+                            {field.options?.map(opt => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        )}
+                        {field.type === 'checkbox' && (
+                          <div className="flex items-center gap-2 py-1">
+                            <input 
+                              type="checkbox" 
+                              checked={customFieldValues[field.id] || false}
+                              onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.checked})}
+                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+                            />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">{customFieldValues[field.id] ? "Ativado" : "Desativado"}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Checklist Section */}
               <div>

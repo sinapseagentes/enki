@@ -1,16 +1,17 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Card, Tag } from "../types";
+import type { Card, Tag, CustomFieldDefinition } from "../types";
 import { archiveCard, restoreCard } from "../services/cardService";
 
 interface CardItemProps {
   card: Card & { isFilteredOut?: boolean };
   tags?: Tag[];
   currentUserProfile?: any;
+  customFieldDefinitions?: CustomFieldDefinition[];
   onClick: () => void;
 }
 
-export const CardItem = ({ card, tags, currentUserProfile, onClick }: CardItemProps) => {
+export const CardItem = ({ card, tags, currentUserProfile, customFieldDefinitions, onClick }: CardItemProps) => {
   const {
     attributes,
     listeners,
@@ -89,10 +90,29 @@ export const CardItem = ({ card, tags, currentUserProfile, onClick }: CardItemPr
       )}
       
       {/* Display tags in list view */}
-      {card.tagIds && card.tagIds.length > 0 && tags && (
-        <div className="flex flex-wrap gap-1 p-2 pb-0">
-          {card.tagIds.map(tagId => {
-            const tag = tags.find(t => t.id === tagId);
+      {(card.tagIds && card.tagIds.length > 0 && tags) || (customFieldDefinitions?.some(f => f.showOnCover && card.customFieldValues?.[f.id])) ? (
+        <div className="flex flex-wrap gap-1 items-center p-2 pb-0">
+          {/* Custom Fields Badges */}
+          {customFieldDefinitions?.filter(f => f.showOnCover && card.customFieldValues?.[f.id]).map(field => {
+            const value = card.customFieldValues![field.id];
+            return (
+              <div 
+                key={field.id}
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-[10px] font-bold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/5"
+                title={field.name}
+              >
+                <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="truncate max-w-[80px]">
+                  {field.type === 'checkbox' ? (value ? 'Sim' : 'Não') : `${value}${field.suffix || ''}`}
+                </span>
+              </div>
+            );
+          })}
+          
+          {card.tagIds && card.tagIds.map(tagId => {
+            const tag = tags?.find(t => t.id === tagId);
             if (!tag) return null;
             return (
               <div 
@@ -104,7 +124,7 @@ export const CardItem = ({ card, tags, currentUserProfile, onClick }: CardItemPr
             );
           })}
         </div>
-      )}
+      ) : null}
 
       <div className="p-3">
         <p className="text-sm text-theme-main break-words pr-6">{card.title}</p>
