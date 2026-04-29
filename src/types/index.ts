@@ -1,13 +1,19 @@
+export interface StorageMetrics {
+  totalBytes: number;
+  byUser: { [userId: string]: number };
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
   photoURL: string;
   bio?: string;
-  title?: string; // e.g., "Developer", "Scribe", etc.
+  title?: string;
   joinedAt?: number;
   lastSeen?: number;
   isOnline?: boolean;
+  storageMetrics?: { totalBytes: number }; // How much total storage this user consumes across all boards
 }
 
 export interface Tag {
@@ -29,6 +35,7 @@ export interface Board {
   }; // Permission levels for board access
   createdAt: number;
   updatedAt: number;
+  storageMetrics?: StorageMetrics; // Storage used by this board
 }
 
 export interface List {
@@ -38,6 +45,7 @@ export interface List {
   order: number;
   archived?: boolean;
   createdAt: number;
+  storageMetrics?: StorageMetrics; // Storage used by this list
 }
 
 export interface ChecklistItem {
@@ -79,6 +87,8 @@ export interface Attachment {
   url: string;
   type: string;
   createdAt: number;
+  size?: number; // Size in bytes
+  uploaderId?: string; // User who uploaded it
 }
 
 export interface Card {
@@ -99,6 +109,7 @@ export interface Card {
   permissions?: {
     [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer';
   }; // Permission levels for card access (overrides board permissions)
+  storageMetrics?: StorageMetrics; // Storage used by this card
 }
 
 export interface Message {

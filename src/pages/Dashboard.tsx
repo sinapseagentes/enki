@@ -9,6 +9,7 @@ import { createBoard, subscribeToBoards, archiveBoard, restoreBoard, updateBoard
 import { subscribeToLists } from "../services/listService";
 import { updateDashboardBackground, getUserSettings, getUserProfile } from "../services/userService";
 import { isUserOnline } from "../services/presenceService";
+import { StorageDashboard } from "../components/StorageDashboard";
 import { COLORS, GRADIENTS } from "../constants/design";
 import type { Board, List } from "../types";
 
@@ -147,6 +148,7 @@ export const Dashboard = () => {
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [searchBoard, setSearchBoard] = useState("");
+  const [viewMode, setViewMode] = useState<"boards" | "storage">("boards");
   const [dashboardBg, setDashboardBg] = useState<string>("");
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -357,21 +359,38 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          <button 
-            onClick={() => setShowArchived(!showArchived)}
-            className={`text-sm px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
-              showArchived ? "bg-white/90 text-blue-700 shadow-lg" : "bg-white/20 text-white border border-white/30 hover:bg-white/30"
-            }`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-            {showArchived 
-              ? (scribeMode ? "Selar Crônicas" : "Ocultar Arquivados") 
-              : (scribeMode ? "Revelar Crônicas" : "Mostrar Arquivados")}
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setViewMode(viewMode === "boards" ? "storage" : "boards")}
+              className={`text-sm px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
+                viewMode === "storage" ? "bg-amber-500 text-white shadow-lg border-amber-600" : "bg-white/20 text-white border border-white/30 hover:bg-white/30"
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+              {viewMode === "storage" ? "Ver Quadros" : (scribeMode ? "Visões Supremos" : "Armazenamento")}
+            </button>
+
+            {viewMode === "boards" && (
+              <button 
+                onClick={() => setShowArchived(!showArchived)}
+                className={`text-sm px-4 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
+                  showArchived ? "bg-white/90 text-blue-700 shadow-lg" : "bg-white/20 text-white border border-white/30 hover:bg-white/30"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                {showArchived 
+                  ? (scribeMode ? "Selar Crônicas" : "Ocultar Arquivados") 
+                  : (scribeMode ? "Revelar Crônicas" : "Mostrar Arquivados")}
+              </button>
+            )}
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {!isCreating && !showArchived && (
+        {viewMode === "storage" ? (
+          <StorageDashboard boards={boards} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {!isCreating && !showArchived && (
             <div 
               onClick={() => setIsCreating(true)}
               className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg h-32 flex items-center justify-center cursor-pointer transition-all border-2 border-dashed border-white/30 group hover-lift active-shrink animate-slide-up"
@@ -416,7 +435,8 @@ export const Dashboard = () => {
           {visibleBoards.map(board => (
             <BoardCard key={board.id} board={board} onArchive={handleArchiveBoard} onRestore={handleRestoreBoard} />
           ))}
-        </div>
+          </div>
+        )}
       </main>
 
       {showSettings && (

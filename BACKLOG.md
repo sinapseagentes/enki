@@ -64,13 +64,17 @@ Este arquivo rastreia o desenvolvimento do Enki seguindo as regras de versioname
 3. **Feature 12.3.0.0:** [x] Motor de Presença Real-Time via heartbeat e Firestore.
 4. **Feature 12.4.0.0:** [x] Indicadores visuais de presença (Navbar, Board, CommandCenter).
 
+## 🟢 Backlog 13 (Visões Supremos - Dashboards & Armazenamento) - [ENTREGUE]
+
+*Status: Concluído | Versão: V13.1.0.0*
+
+1. **Feature 13.1.0.0:** [x] Atualização de Attachment, Board, List, Card e UserProfile para suportar `storageMetrics`.
+2. **Feature 13.2.0.0:** [x] Motor de armazenamento em tempo real usando batches do Firestore.
+3. **Feature 13.3.0.0:** [x] Novo `StorageDashboard` detalhando consumo por Quadro, Lista e Cartão.
+
 ---
 
 ## 🔴 Próximos Backlogs (Planejados)
 
-1. **Backlog 13 (Visões Supremos - Dashboards & Gráficos):** V13.0.0.0
-   - Gráficos de produtividade (quantos Selos criados/concluídos por período).
-   - Visualização de Calendário para prazos (Decretos com data).
-
-2. **Backlog 14 (Mobile Mastery - PWA):** V14.0.0.0
+1. **Backlog 14 (Mobile Mastery - PWA):** V14.0.0.0
    - Refinamento total para uso em dispositivos móveis (gestos de swipe no Scribe Mode).

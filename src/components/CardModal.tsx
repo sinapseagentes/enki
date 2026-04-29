@@ -10,6 +10,7 @@ import { subscribeToLists } from "../services/listService";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { updateStorageMetrics } from "../services/metricsService";
 import confetti from "canvas-confetti";
 
 interface CardModalProps {
@@ -269,10 +270,15 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
         url,
         type: file.type,
         createdAt: Date.now(),
+        size: file.size,
+        uploaderId: user.uid,
       };
       
       const updatedAttachments = [...attachments, newAttachment];
       setAttachments(updatedAttachments);
+      
+      // Atualizar métricas de armazenamento
+      await updateStorageMetrics(file.size, user.uid, card.boardId, card.listId, card.id);
       
       // Auto-set as cover if it's the first image
       if (file.type.startsWith("image/") && !coverUrl) {
@@ -296,10 +302,15 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
     }
   };
 
-  const removeAttachment = (id: string) => {
+  const removeAttachment = async (id: string) => {
     const removed = attachments.find(a => a.id === id);
     if (removed?.url === coverUrl) setCoverUrl("");
     setAttachments(attachments.filter(a => a.id !== id));
+
+    // Atualizar métricas se tiver o tamanho gravado e id do criador (ou user atual fallback)
+    if (removed && removed.size && card.id && user) {
+      await updateStorageMetrics(-removed.size, removed.uploaderId || user.uid, card.boardId, card.listId, card.id);
+    }
   };
 
   const addChecklistItem = (e: React.FormEvent) => {
