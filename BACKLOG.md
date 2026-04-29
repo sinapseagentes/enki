@@ -71,10 +71,30 @@ Este arquivo rastreia o desenvolvimento do Enki seguindo as regras de versioname
 1. **Feature 13.1.0.0:** [x] Atualização de Attachment, Board, List, Card e UserProfile para suportar `storageMetrics`.
 2. **Feature 13.2.0.0:** [x] Motor de armazenamento em tempo real usando batches do Firestore.
 3. **Feature 13.3.0.0:** [x] Novo `StorageDashboard` detalhando consumo por Quadro, Lista e Cartão.
+4. **Feature 13.4.0.0:** [x] Painel Administrativo (`/admin`) para gestão de cotas e usuários fantasmas.
+5. **Feature 13.5.0.0:** [x] Propriedade de cartões automática e mensagens de erro explícitas.
 
 ---
 
 ## 🔴 Próximos Backlogs (Planejados)
 
-1. **Backlog 14 (Mobile Mastery - PWA):** V14.0.0.0
-   - Refinamento total para uso em dispositivos móveis (gestos de swipe no Scribe Mode).
+1. **Backlog 14 (Campos Ancestrais - Custom Fields):** V14.0.0.0
+   - Criação de campos personalizados (Texto, Data, Checkbox) por Quadro.
+   - Exibição dos campos na capa do cartão.
+
+2. **Backlog 15 (Visões de Oráculo - Calendar & Table):** V15.0.0.0
+   - Visualização de Calendário para datas de entrega.
+   - Visualização em Tabela (estilo planilha) para edição em massa.
+
+3. **Backlog 16 (Caminho da Liberdade - Export & UI Polish):** V16.0.0.0
+   - Exportação de dados do quadro em JSON/CSV.
+   - Filtros persistentes (Saved Searches).
+   - Cores para listas e opção de colapsar colunas.
+
+4. **Backlog 17 (Mobile Mastery - PWA):** V17.0.0.0
+   - Refinamento total para uso em dispositivos móveis (gestos de swipe).
+   - Configuração de Manifesto PWA para instalação como App nativo.
+
+5. **Backlog ∞ (Lojas Nativas - App Stores):** V∞
+   - Integração do Capacitor para empacotar o código web.
+   - Compilação do binário `.ipa` para Apple App Store e `.aab` para Google Play Store.
