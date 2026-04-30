@@ -11,7 +11,7 @@ Desenvolvimento de um clone do Trello usando as melhores práticas de **ACID, SO
 
 ## 📅 Status do Projeto
 
-Atualmente na **V11.3.0.1** — Todos os backlogs até **Automação (Backlog 11)** estão entregues.
+Atualmente na **V17.1.0.0** — Todos os backlogs até **Sincronização & Portabilidade (Backlog 17)** estão entregues.
 
 ### Backlogs Entregues
 
@@ -22,6 +22,12 @@ Atualmente na **V11.3.0.1** — Todos os backlogs até **Automação (Backlog 11
 | 9       | Gestão de Itens (Mover/Copiar)   | V9.0.0.0  |
 | 10      | Privacidade (Permissões)         | V10.1.0.0 |
 | 11      | Automação (Butler simplificado)  | V11.3.0.0 |
+| 12      | Hub Social (Presença Real-time)  | V12.4.0.0 |
+| 13      | Dashboards & Métricas            | V13.1.0.0 |
+| 14      | Custom Fields (Campos)           | V14.0.0.0 |
+| 15      | Views (Table & Calendar)         | V15.0.0.0 |
+| 16      | Export iCal                      | V16.1.0.0 |
+| 17      | Export JSON/CSV & Kanban UX      | V17.1.0.0 |
 
 Para ver o progresso detalhado de cada Sprint e Feature, acesse:
 

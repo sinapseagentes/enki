@@ -8,7 +8,7 @@ Você é o assistente de desenvolvimento do **Enki**, um clone premium do Trello
 
 - **Nome:** Enki (anteriormente "Ollert")
 - **Propósito:** Kanban board colaborativo premium, multi-usuário, com automação e permissões
-- **Versão atual:** V11.3.0.1
+- **Versão atual:** V17.1.0.0
 - **Versionamento:** `Vx.y.z.k` (x=major, y=backlog/sprint, z=feature, k=bugfix)
 
 ---
@@ -219,14 +219,21 @@ Persistido em: `localStorage["@Enki:scribeMode"]`
 | 9 | Gestão de Itens (Mover/Copiar entre boards) | V9.0.0.0 | ✅ |
 | 10 | Privacidade (4 níveis de permissão) | V10.1.0.0 | ✅ |
 | 11 | Automação (Butler com triggers + actions) | V11.3.0.0 | ✅ |
+| 12 | Hub Social (Presença Real-time) | V12.4.0.0 | ✅ |
+| 13 | Dashboards & Métricas | V13.1.0.0 | ✅ |
+| 14 | Custom Fields (Campos) | V14.0.0.0 | ✅ |
+| 15 | Views (Table & Calendar) | V15.0.0.0 | ✅ |
+| 16 | Export iCal | V16.1.0.0 | ✅ |
+| 17 | Export JSON/CSV & Kanban UX | V17.1.0.0 | ✅ |
 
 ---
 
 ## Próximos Backlogs (Planejados)
 
-- **Backlog 12:** Hub Social — Perfis de Usuários + Presença Real-Time
-- **Backlog 13:** Dashboards & Gráficos de Produtividade + Calendário
-- **Backlog 14:** PWA / Mobile Mastery
+- **Backlog 16.2:** Sincronização Ancestral — iCal Feed (Link Dinâmico)
+- **Backlog 17.2:** Caminho da Liberdade — Filtros Persistentes
+- **Backlog 18:** Mobile Mastery — PWA & Gestos de Swipe
+- **Backlog ∞:** Lojas Nativas — App Stores (Capacitor)
 
 ---
 
