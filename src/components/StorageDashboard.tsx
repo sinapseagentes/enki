@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import type { Board, UserProfile } from "../types";
+import type { Board, UserProfile, List, Card } from "../types";
 
 interface StorageDashboardProps {
   boards: Board[]; // Boards the user is a member of
@@ -130,8 +130,8 @@ export const StorageDashboard = ({ boards }: StorageDashboardProps) => {
 
 // Subcomponent to load and display list and card breakdown
 const BoardStorageDetails = ({ boardId, userId, formatBytes }: { boardId: string, userId: string, formatBytes: (b: number) => string }) => {
-  const [lists, setLists] = useState<any[]>([]);
-  const [cards, setCards] = useState<any[]>([]);
+  const [lists, setLists] = useState<List[]>([]);
+  const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -145,8 +145,8 @@ const BoardStorageDetails = ({ boardId, userId, formatBytes }: { boardId: string
         
         const [listsSnap, cardsSnap] = await Promise.all([getDocs(listsQuery), getDocs(cardsQuery)]);
         
-        const loadedLists = listsSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(l => (l as any).storageMetrics?.byUser?.[userId] > 0);
-        const loadedCards = cardsSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => (c as any).storageMetrics?.byUser?.[userId] > 0);
+        const loadedLists = listsSnap.docs.map(d => ({ id: d.id, ...d.data() } as List)).filter(l => l.storageMetrics?.byUser?.[userId] && l.storageMetrics.byUser[userId] > 0);
+        const loadedCards = cardsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Card)).filter(c => c.storageMetrics?.byUser?.[userId] && c.storageMetrics.byUser[userId] > 0);
         
         setLists(loadedLists);
         setCards(loadedCards);

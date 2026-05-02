@@ -192,6 +192,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, board, ca
                         >
                           Editor
                         </button>
+                        <button
+                          onClick={() => handlePermissionChange(userId, 'viewer')}
+                          className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${permission === 'viewer' ? 'bg-purple-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                        >
+                          Leitor
+                        </button>
                       </div>
                     </div>
                   );

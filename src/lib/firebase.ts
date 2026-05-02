@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getDoc, doc, deleteDoc, collection } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCcR9K50jJNA4gjGkDvBhXL0tYO_STVEkE",
@@ -28,3 +29,14 @@ if (window.location.hostname === "localhost") {
 }
 
 export { app, auth, db, storage, googleProvider };
+
+// Porta de Diagnóstico (Remover antes do deploy)
+
+if (typeof window !== 'undefined') {
+
+  (window as any).db = db;
+
+  (window as any).f = { getDoc, doc, deleteDoc, collection };
+
+}
+

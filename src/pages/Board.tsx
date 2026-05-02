@@ -1,22 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  DndContext, 
-  DragOverlay, 
-  closestCorners, 
-  KeyboardSensor, 
-  PointerSensor, 
-  useSensor, 
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  PointerSensor,
+  useSensor,
   useSensors,
   type DragStartEvent,
   type DragOverEvent,
-  type DragEndEvent
+  type DragEndEvent,
 } from "@dnd-kit/core";
-import { 
-  arrayMove, 
-  SortableContext, 
-  sortableKeyboardCoordinates, 
-  horizontalListSortingStrategy 
+import {
+  arrayMove,
+  SortableContext,
+  horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { subscribeToLists, createList, updateListOrder } from "../services/listService";
 import { subscribeToCards, createCard, updateCard } from "../services/cardService";
@@ -44,10 +42,11 @@ export const BoardPage = () => {
   const { theme, scribeMode } = useTheme();
 
   const [board, setBoard] = useState<Board | null>(null);
+  const [boardError, setBoardError] = useState<string | null>(null);
   const [lists, setLists] = useState<List[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
-  const [presenceMap, setPresenceMap] = useState<Record<string, any>>({});
+  const [members, setMembers] = useState<UserProfile[]>([]);
+  const [presenceMap, setPresenceMap] = useState<Record<string, UserProfile>>({});
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState("");
   const [activeCard, setActiveCard] = useState<Card | null>(null);
@@ -70,16 +69,23 @@ export const BoardPage = () => {
   useEffect(() => {
     if (!boardId) return;
 
-    const unsubscribeBoard = subscribeToBoard(boardId, (fetchedBoard) => {
-      setBoard(fetchedBoard);
-    });
+    const unsubscribeBoard = subscribeToBoard(
+      boardId, 
+      (fetchedBoard) => {
+        setBoard(fetchedBoard);
+        setBoardError(null);
+      },
+      (error) => {
+        setBoardError("access_denied");
+      }
+    );
 
     const unsubscribeLists = subscribeToLists(boardId, (fetchedLists) => {
-      setLists(fetchedLists);
+      if (!isDraggingRef.current) setLists(fetchedLists);
     });
 
     const unsubscribeCards = subscribeToCards(boardId, (fetchedCards) => {
-      setCards(fetchedCards);
+      if (!isDraggingRef.current) setCards(fetchedCards);
     });
 
     return () => {
@@ -127,117 +133,6 @@ export const BoardPage = () => {
       console.error("Error creating list:", error);
     }
   };
-  const [activeDragList, setActiveDragList] = useState<List | null>(null);
-  const [activeDragCard, setActiveDragCard] = useState<Card | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const onDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const { type } = active.data.current || {};
-
-    if (type === "list") {
-      const list = lists.find((l) => l.id === active.id);
-      if (list) setActiveDragList(list);
-    } else if (type === "card") {
-      const card = cards.find((c) => c.id === active.id);
-      if (card) setActiveDragCard(card);
-    }
-  };
-
-  const onDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const isActiveACard = active.data.current?.type === "card";
-    const isOverACard = over.data.current?.type === "card";
-
-    if (!isActiveACard) return;
-
-    // 1. Dropping a Card over another Card
-    if (isActiveACard && isOverACard) {
-      setCards((prevCards) => {
-        const activeIndex = prevCards.findIndex((c) => c.id === activeId);
-        const overIndex = prevCards.findIndex((c) => c.id === overId);
-
-        if (prevCards[activeIndex].listId !== prevCards[overIndex].listId) {
-          prevCards[activeIndex].listId = prevCards[overIndex].listId;
-          return arrayMove(prevCards, activeIndex, overIndex - 1);
-        }
-
-        return arrayMove(prevCards, activeIndex, overIndex);
-      });
-    }
-
-    // 2. Dropping a Card over a List
-    const isOverAList = over.data.current?.type === "list";
-
-    if (isActiveACard && isOverAList) {
-      setCards((prevCards) => {
-        const activeIndex = prevCards.findIndex((c) => c.id === activeId);
-        prevCards[activeIndex].listId = overId as string;
-        return arrayMove(prevCards, activeIndex, activeIndex); // Triggers re-render
-      });
-    }
-  };
-
-  const onDragEnd = async (event: DragEndEvent) => {
-    setActiveDragList(null);
-    setActiveDragCard(null);
-
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const isActiveAList = active.data.current?.type === "list";
-    if (isActiveAList) {
-      const oldIndex = lists.findIndex((l) => l.id === activeId);
-      const newIndex = lists.findIndex((l) => l.id === overId);
-      const newLists = arrayMove(lists, oldIndex, newIndex);
-      setLists(newLists);
-
-      // Persistir no Firebase
-      try {
-        await Promise.all(newLists.map((l, i) => updateListOrder(l.id!, i)));
-      } catch (e) {
-        console.error("Erro ao salvar ordem das listas:", e);
-      }
-      return;
-    }
-
-    // Persistir cartões no Firebase
-    const cardId = activeId as string;
-    const movedCard = cards.find(c => c.id === cardId);
-    if (!movedCard) return;
-
-    const listCards = cards
-      .filter(c => c.listId === movedCard.listId)
-      .sort((a, b) => a.order - b.order);
-
-    try {
-      await Promise.all(listCards.map((c, i) => updateCard(c.id!, { order: i, listId: c.listId })));
-    } catch (e) {
-      console.error("Erro ao salvar ordem dos cartões:", e);
-    }
-  };
 
   const handleAddCard = async (listId: string, title: string) => {
     if (!boardId) {
@@ -262,12 +157,142 @@ export const BoardPage = () => {
           details: { cardTitle: title }
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating card:", error);
-      alert(`Falha ao criar o cartão. Motivo: ${error.message || "Erro desconhecido"}`);
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      alert(`Falha ao criar o cartão. Motivo: ${errorMessage}`);
     }
   };
 
+  // ═══════════════════════════════════════════
+  // DRAG AND DROP — Implementação do Zero v2
+  // ═══════════════════════════════════════════
+  const isDraggingRef = useRef(false);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  // Encontra a lista que contém um cartão
+  const findListOfCard = useCallback((cardId: string, currentCards: Card[]) => {
+    return currentCards.find(c => c.id === cardId)?.listId;
+  }, []);
+
+  const activeDragCard = activeDragId ? cards.find(c => c.id === activeDragId) : null;
+  const activeDragList = activeDragId ? lists.find(l => l.id === activeDragId) : null;
+
+  const onDragStart = (event: DragStartEvent) => {
+    isDraggingRef.current = true;
+    setActiveDragId(event.active.id as string);
+  };
+
+  const onDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeType = active.data.current?.type;
+    const overType = over.data.current?.type;
+
+    if (activeType !== "card") return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Determina a lista destino
+    let overListId: string | undefined;
+    if (overType === "card") {
+      overListId = findListOfCard(overId, cards);
+    } else if (overType === "list") {
+      overListId = overId;
+    }
+
+    const activeListId = findListOfCard(activeId, cards);
+    if (!overListId || !activeListId) return;
+
+    // Só atualiza se mudou de lista (cross-list move)
+    if (activeListId !== overListId) {
+      setCards(prev => {
+        const next = prev.map(c =>
+          c.id === activeId ? { ...c, listId: overListId! } : c
+        );
+        return next;
+      });
+    }
+  };
+
+  const onDragEnd = async (event: DragEndEvent) => {
+    setActiveDragId(null);
+
+    const { active, over } = event;
+    if (!over) {
+      isDraggingRef.current = false;
+      return;
+    }
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    const activeType = active.data.current?.type;
+
+    try {
+      if (activeType === "list") {
+        if (activeId === overId) { isDraggingRef.current = false; return; }
+        const oldIdx = lists.findIndex(l => l.id === activeId);
+        const newIdx = lists.findIndex(l => l.id === overId);
+        if (oldIdx === -1 || newIdx === -1) { isDraggingRef.current = false; return; }
+
+        const reordered = arrayMove(lists, oldIdx, newIdx);
+        setLists(reordered); // Optimistic
+
+        const { updateListsOrderBatch } = await import("../services/listService");
+        await updateListsOrderBatch(reordered.map((l, i) => ({ id: l.id!, order: i })));
+      } else if (activeType === "card") {
+        // Pega o estado ATUAL (já com listId atualizado pelo onDragOver)
+        const currentCards = [...cards];
+        const movedCard = currentCards.find(c => c.id === activeId);
+        if (!movedCard) { isDraggingRef.current = false; return; }
+
+        const targetListId = movedCard.listId;
+
+        // Reordena dentro da lista destino
+        const listCards = currentCards.filter(c => c.listId === targetListId);
+        const activeIdx = listCards.findIndex(c => c.id === activeId);
+
+        if (over.data.current?.type === "card") {
+          const overIdx = listCards.findIndex(c => c.id === overId);
+          if (overIdx !== -1 && activeIdx !== overIdx) {
+            const reordered = arrayMove(listCards, activeIdx, overIdx);
+            setCards(prev => {
+              const others = prev.filter(c => c.listId !== targetListId);
+              return [...others, ...reordered];
+            });
+            // Persiste atomicamente
+            const { updateCardsOrderBatch } = await import("../services/cardService");
+            await updateCardsOrderBatch(reordered.map((c, i) => ({ id: c.id!, order: i, listId: targetListId })));
+          } else {
+            // Mesmo índice ou só mudou de lista sem reordenar
+            const { updateCardsOrderBatch } = await import("../services/cardService");
+            await updateCardsOrderBatch(listCards.map((c, i) => ({ id: c.id!, order: i, listId: targetListId })));
+          }
+        } else {
+          // Dropped sobre uma lista (não sobre um cartão)
+          const { updateCardsOrderBatch } = await import("../services/cardService");
+          await updateCardsOrderBatch(listCards.map((c, i) => ({ id: c.id!, order: i, listId: targetListId })));
+        }
+      }
+    } catch (e: any) {
+      console.error("Drag persist error:", e);
+      if (e?.code === 'permission-denied') {
+        alert("Acesso Negado: Você não tem permissão para reorganizar itens.");
+      } else {
+        alert("Falha ao salvar reorganização.");
+      }
+      // Rollback: força refresh dos dados do servidor
+      window.location.reload();
+    } finally {
+      isDraggingRef.current = false;
+    }
+  };
 
   const currentBg = board?.background || "from-blue-600 to-blue-800";
   const isGradient = currentBg.startsWith("from-");
@@ -298,6 +323,26 @@ export const BoardPage = () => {
   };
 
   const currentUserProfile = members.find(m => m.uid === user?.uid);
+
+  if (boardError === "access_denied") {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50 flex-col gap-4">
+        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-2">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-800">Acesso Negado</h1>
+        <p className="text-gray-500 max-w-md text-center">Você não tem permissão para visualizar este quadro. Solicite acesso ao administrador ou retorne ao painel principal.</p>
+        <button 
+          onClick={() => navigate("/")} 
+          className="mt-4 bg-blue-600 hover:bg-blue-700 transition-colors text-white font-bold px-6 py-2 rounded-lg shadow-sm"
+        >
+          Voltar ao Dashboard
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -672,26 +717,26 @@ export const BoardPage = () => {
           onDragOver={onDragOver}
           onDragEnd={onDragEnd}
         >
-          <div className="flex-1 flex overflow-x-auto overflow-y-hidden p-4 items-start gap-4 custom-scrollbar">
-            {viewMode === 'kanban' && (
-              <>
-                <SortableContext
-                  items={lists.map((l) => l.id!)}
-                  strategy={horizontalListSortingStrategy}
-                >
-                  {lists.map((list) => (
-                    <ListContainer 
-                      key={list.id} 
-                      list={list} 
-                      cards={getFilteredCards(list.id!)} 
-                      tags={board?.tags}
-                      onAddCard={handleAddCard}
-                      onCardClick={setActiveCard}
-                      currentUserProfile={currentUserProfile}
-                      customFieldDefinitions={board?.customFieldDefinitions}
-                    />
-                  ))}
-                </SortableContext>
+        <div className="flex-1 flex overflow-x-auto overflow-y-hidden p-4 items-start gap-4 custom-scrollbar">
+          {viewMode === 'kanban' && (
+            <>
+              <SortableContext
+                items={lists.map(l => l.id!)}
+                strategy={horizontalListSortingStrategy}
+              >
+                {lists.map((list) => (
+                  <ListContainer 
+                    key={list.id} 
+                    list={list} 
+                    cards={getFilteredCards(list.id!)} 
+                    tags={board?.tags}
+                    onAddCard={handleAddCard}
+                    onCardClick={setActiveCard}
+                    currentUserProfile={currentUserProfile}
+                    customFieldDefinitions={board?.customFieldDefinitions}
+                  />
+                ))}
+              </SortableContext>
 
                 {/* Add List Button */}
                 <div className="w-72 shrink-0">
@@ -755,21 +800,22 @@ export const BoardPage = () => {
                 scribeMode={scribeMode}
               />
             )}
-          </div>
+        </div>
 
-          <DragOverlay>
-            {activeDragList ? (
-              <ListContainer
-                list={activeDragList}
-                cards={cards.filter((c) => c.listId === activeDragList.id)}
-                onAddCard={() => {}}
-                onCardClick={() => {}}
-              />
-            ) : null}
-            {activeDragCard ? (
-              <CardItem card={activeDragCard} onClick={() => {}} />
-            ) : null}
-          </DragOverlay>
+        <DragOverlay dropAnimation={null}>
+          {activeDragCard ? (
+            <CardItem
+              card={activeDragCard}
+              onClick={() => {}}
+              isDragOverlay
+            />
+          ) : null}
+          {activeDragList ? (
+            <div className="w-72 bg-theme-surface rounded-lg shadow-2xl border-2 border-blue-500 p-3 opacity-80 rotate-3">
+              <span className="font-bold text-sm">{activeDragList.title}</span>
+            </div>
+          ) : null}
+        </DragOverlay>
         </DndContext>
       </main>
 

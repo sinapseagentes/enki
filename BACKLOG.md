@@ -128,3 +128,8 @@ Este arquivo rastreia o desenvolvimento do Enki seguindo as regras de versioname
 4. **Backlog ∞ (Lojas Nativas - App Stores):** V∞
    - Integração do Capacitor para empacotar o código web.
    - Compilação do binário `.ipa` para Apple App Store e `.aab` para Google Play Store.
+
+5. **Backlog (Painel Administrativo - Segurança):** `[PRIORIDADE: SEGURANÇA]`
+   - Implementar exclusão completa de usuário (Banimento). A lógica no código deverá chamar duas funções simultâneas:
+     - Uma para excluir a conta no Auth (`deleteUser(uid)`).
+     - Outra para deletar o documento no Firestore (`deleteDoc(...)`), garantindo o acionamento da trava de segurança global no mesmo milissegundo.

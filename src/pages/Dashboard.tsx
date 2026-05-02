@@ -152,7 +152,7 @@ export const Dashboard = () => {
   const [dashboardBg, setDashboardBg] = useState<string>("");
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [userProfileData, setUserProfileData] = useState<any>(null);
+  const [userProfileData, setUserProfileData] = useState<import("../types").UserProfile | null>(null);
 
   useEffect(() => {
     if (!user) return;

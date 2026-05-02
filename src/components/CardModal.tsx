@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Card, ChecklistItem, Comment, Attachment, Board, UserProfile, List } from "../types";
+import type { Card, ChecklistItem, Comment, Attachment, Board, UserProfile, List, CustomFieldValue } from "../types";
 import { updateCard, moveCard, copyCard } from "../services/cardService";
 import { addComment, subscribeToComments, updateComment, deleteComment } from "../services/commentService";
 import { uploadFile } from "../services/storageService";
@@ -12,6 +12,7 @@ import { useNotification } from "../contexts/NotificationContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { updateStorageMetrics } from "../services/metricsService";
 import confetti from "canvas-confetti";
+import DOMPurify from "dompurify";
 
 interface CardModalProps {
   card: Card;
@@ -58,7 +59,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [cardPermissions, setCardPermissions] = useState<{ [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer' }>(card.permissions || {});
   const [showPermissions, setShowPermissions] = useState(false);
-  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>(card.customFieldValues || {});
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, CustomFieldValue>>(card.customFieldValues || {});
 
   const toggleTag = (tagId: string) => {
     setSelectedTagIds(prev => 
@@ -90,12 +91,12 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
 
   // Subscribe to comments
   useEffect(() => {
-    if (!card.id) return;
-    const unsubscribe = subscribeToComments(card.id, (fetched) => {
+    if (!card.id || !card.boardId) return;
+    const unsubscribe = subscribeToComments(card.id, card.boardId, (fetched) => {
       setComments(fetched);
     });
     return () => unsubscribe();
-  }, [card.id]);
+  }, [card.id, card.boardId]);
 
   // V9: Fetch boards for move/copy
   useEffect(() => {
@@ -230,8 +231,13 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
       }
 
       setNewComment("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao adicionar comentário:", error);
+      if (error?.code === 'permission-denied') {
+        showNotification("Acesso Negado: Você tem permissão apenas de Leitura.", "error");
+      } else {
+        showNotification("Falha ao adicionar comentário.", "error");
+      }
     }
   };
 
@@ -888,7 +894,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                           </div>
                         ) : (
                           <>
-                            <p className="text-sm text-theme-main whitespace-pre-wrap">{comment.text}</p>
+                            <p className="text-sm text-theme-main whitespace-pre-wrap">{DOMPurify.sanitize(comment.text)}</p>
                             {user?.uid === comment.userId && (
                               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button 

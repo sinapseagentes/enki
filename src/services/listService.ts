@@ -58,6 +58,16 @@ export const updateListOrder = async (listId: string, newOrder: number) => {
   await updateDoc(listRef, { order: newOrder });
 };
 
+export const updateListsOrderBatch = async (updates: { id: string, order: number }[]) => {
+  const { writeBatch } = await import("firebase/firestore");
+  const batch = writeBatch(db);
+  updates.forEach(update => {
+    const listRef = doc(db, LISTS_COLLECTION, update.id);
+    batch.update(listRef, { order: update.order });
+  });
+  await batch.commit();
+};
+
 export const updateListTitle = async (listId: string, title: string) => {
   const listRef = doc(db, LISTS_COLLECTION, listId);
   await updateDoc(listRef, { title });

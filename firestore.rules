@@ -1,8 +1,67 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{allPaths=**} {
-      allow read, write: if true;
+    
+    function hasValidAuth() {
+      return request.auth != null;
+    }
+
+    function isAuthenticated() {
+      return hasValidAuth() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isBoardMember(boardId) {
+      return isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/boards/$(boardId)).data.members;
+    }
+
+    function hasWritePermission(boardId) {
+      let board = get(/databases/$(database)/documents/boards/$(boardId)).data;
+      let role = board.permissions != null ? board.permissions[request.auth.uid] : 'editor';
+      return isAuthenticated() && (request.auth.uid in board.members) && (role == 'owner' || role == 'admin' || role == 'editor');
+    }
+
+    // 🛡️ Boards
+    match /boards/{boardId} {
+      allow read: if isAuthenticated() && request.auth.uid in resource.data.members;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.members;
+      allow delete: if isAuthenticated() && resource.data.permissions[request.auth.uid] == 'owner';
+    }
+
+    // 🛡️ Sub-coleção: Cards
+    match /cards/{cardId} {
+      allow read: if isAuthenticated() && isBoardMember(resource.data.boardId);
+      allow create: if hasWritePermission(request.resource.data.boardId);
+      allow update, delete: if hasWritePermission(resource.data.boardId);
+    }
+    
+    // 🛡️ Outras Sub-coleções (Lists, Comments, Activities)
+    match /lists/{listId} {
+      allow read: if isAuthenticated() && isBoardMember(resource.data.boardId);
+      allow create: if hasWritePermission(request.resource.data.boardId);
+      allow update, delete: if hasWritePermission(resource.data.boardId);
+    }
+    match /comments/{commentId} {
+      allow read: if isAuthenticated() && isBoardMember(resource.data.boardId);
+      allow create: if hasWritePermission(request.resource.data.boardId);
+      allow update, delete: if hasWritePermission(resource.data.boardId);
+    }
+    match /activities/{activityId} {
+      allow read: if isAuthenticated() && isBoardMember(resource.data.boardId);
+      allow create: if hasWritePermission(request.resource.data.boardId);
+      allow update, delete: if hasWritePermission(resource.data.boardId);
+    }
+
+    // 🛡️ Profiles de Usuários
+    match /users/{userId} {
+      allow read: if isAuthenticated() || (hasValidAuth() && request.auth.uid == userId);
+      allow create: if hasValidAuth() && request.auth.uid == userId;
+      allow update, delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Bloqueio Global
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

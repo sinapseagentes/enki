@@ -1,0 +1,34 @@
+# 📜 REGRAS DE OURO - PROTOCOLO DE BLINDAGEM 
+
+## 1. 🛡️ AUDITORIA DE "SHADOW LOGIC"
+*   **Anti-Frontend-Security**: Proibido confiar apenas no `if(user)` do React. Toda lógica de permissão deve ser espelhada nas Firestore Rules.
+*   **Database Rejection**: Garanta que o banco rejeite leituras se o `UID` não estiver no array de membros do Board[cite: 4, 5].
+
+## 2. 🧼 SANITIZAÇÃO E INJEÇÃO (XSS)
+*   **Dados Radioativos**: Trate todo input do usuário como ameaça. Implemente sanitização rigorosa em títulos e descrições antes da renderização.
+*   **Enki Integration**: O sistema deve limpar scripts maliciosos de campos de texto de forma sistemática.
+
+## 3. 🏗️ TOLERÂNCIA ZERO AO 'ANY' (Dívida Técnica)
+*   **Type-Check Rigoroso**: É proibido o uso de `any` no TypeScript[cite: 3].
+*   **Refatoração de Herança**: Se encontrar tipos genéricos ou inconsistentes herdados de sessões anteriores, refatore-os para interfaces estritas imediatamente[cite: 3, 8].
+
+## 4. 🕵️ PREVENÇÃO DE FUGA DE DADOS (Data Leakage)
+*   **Selectors Mínimos**: Audite os selectors de dados. Busque apenas o estritamente necessário (ex: `photoURL` em vez do objeto `User` completo).
+*   **Privacidade**: Certifique-se de que e-mails e metadados internos não vazem para o frontend[cite: 4].
+
+## 🦴 SISTEMA DE SKELETON
+*   **Layout Shift**: Mantenha Skeletons que reservem o espaço exato da UI final nas visões de Kanban, Tabela e Calendário[cite: 5].
+
+## 🧠 COMANDO DE DESCONFIANÇA (SECURITY ENGINEER MODE)
+*   Antes de qualquer tarefa de Backlog, a IA deve agir como Security Engineer e analisar `cardService`, `boardService` e `userService` em busca de falhas de segurança no cliente e falta de sanitização.
+
+## 🕵️ AUDITORIA SISTÊMICA GLOBAL
+*   **Varredura de Diretório**: A auditoria não se limita aos arquivos de serviço; ela deve abranger recursivamente todos os diretórios `src/services`, `src/hooks`, `src/context` e `src/pages`.
+*   **Mapeamento de Vulnerabilidades**: Para cada arquivo analisado, a IA deve verificar:
+    1.  **Shadow Logic**: Lógica de permissão no frontend sem espelhamento no `firestore.rules`.
+    2.  **XSS & Sanitização**: Falta de tratamento em strings que venham do banco para o DOM.
+    3.  **Data Leakage**: Seletores de objetos inteiros quando apenas um campo é necessário.
+    4.  **Tipagem Tênue**: Uso de `any` ou `unknown` que esconda a estrutura real dos dados.
+
+## 5. 🚨 RECOMENDAÇÕES DE SEGURANÇA E BACKLOG
+*   **Gestão de Prioridades**: Sempre que uma nova recomendação de segurança for identificada para o futuro, o item correspondente **DEVE** ser criado no `BACKLOG.md` imediatamente com a tag explícita de `[PRIORIDADE: SEGURANÇA]` no desenvolvimento.

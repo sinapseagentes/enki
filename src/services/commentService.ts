@@ -22,9 +22,10 @@ export const addComment = async (comment: Omit<Comment, "id" | "createdAt">) => 
   });
 };
 
-export const subscribeToComments = (cardId: string, callback: (comments: Comment[]) => void) => {
+export const subscribeToComments = (cardId: string, boardId: string, callback: (comments: Comment[]) => void) => {
   const q = query(
     collection(db, COMMENTS_COLLECTION),
+    where("boardId", "==", boardId),
     where("cardId", "==", cardId),
     orderBy("createdAt", "desc")
   );
@@ -35,6 +36,8 @@ export const subscribeToComments = (cardId: string, callback: (comments: Comment
       ...doc.data()
     })) as Comment[];
     callback(comments);
+  }, (error) => {
+    console.error("Erro ao escutar comentários:", error);
   });
 };
 

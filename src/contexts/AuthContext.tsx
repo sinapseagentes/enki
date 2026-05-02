@@ -20,31 +20,73 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-      
-      if (currentUser && currentUser.email) {
-        try {
-          const { doc, setDoc } = await import("firebase/firestore");
-          await setDoc(doc(db, "users", currentUser.uid), {
-            uid: currentUser.uid,
-            email: currentUser.email,
-            displayName: currentUser.displayName,
-            photoURL: currentUser.photoURL,
-            lastLogin: Date.now()
-          }, { merge: true });
-        } catch (error) {
-          console.error("Error saving user profile to DB:", error);
-        }
+    let unsubscribeUserDoc: (() => void) | undefined;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        
+        // Ativa um olheiro no próprio perfil do usuário para KICK em tempo real
+        const { doc, onSnapshot } = await import("firebase/firestore");
+        unsubscribeUserDoc = onSnapshot(
+          doc(db, "users", currentUser.uid), 
+          (snap) => {
+            if (!snap.exists()) {
+              // Se o documento não existe, verificamos se é um cadastro novo (menos de 1 minuto)
+              const creationTime = new Date(currentUser.metadata.creationTime || Date.now()).getTime();
+              const isNewUser = Date.now() - creationTime < 60000;
+              
+              if (!isNewUser) {
+                console.warn("🚨 CONTA INEXISTENTE NO BANCO: KICK AUTOMÁTICO.");
+                signOut(auth);
+                setUser(null);
+              }
+            }
+          },
+          (error) => console.error("Erro de permissão no perfil (Kick):", error)
+        );
+      } else {
+        setUser(null);
+        if (unsubscribeUserDoc) unsubscribeUserDoc();
       }
+      setLoading(false);
     });
-    return unsubscribe;
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeUserDoc) unsubscribeUserDoc();
+    };
   }, []);
 
   const loginWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const { getAdditionalUserInfo } = await import("firebase/auth");
+      const result = await signInWithPopup(auth, googleProvider);
+      const currentUser = result.user;
+      const details = getAdditionalUserInfo(result);
+      
+      const { doc, setDoc, updateDoc } = await import("firebase/firestore");
+      
+      if (details?.isNewUser) {
+        // Apenas recria o documento no banco se for um cadastro NOVO e Genuíno.
+        await setDoc(doc(db, "users", currentUser.uid), {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          photoURL: currentUser.photoURL,
+          lastLogin: Date.now()
+        });
+      } else {
+        // Se já existia, só atualiza o lastLogin. Se o documento foi deletado por um admin, 
+        // isso vai falhar e o usuário NÃO será recriado, travando-o na tela de Acesso Negado.
+        try {
+          await updateDoc(doc(db, "users", currentUser.uid), {
+            lastLogin: Date.now()
+          });
+        } catch (e) {
+          console.warn("Usuário banido tentou fazer login. Bloqueado pelo Firestore Rules.");
+        }
+      }
     } catch (error) {
       console.error("Error signing in with Google", error);
       throw error;

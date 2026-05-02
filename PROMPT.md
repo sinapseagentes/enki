@@ -247,7 +247,7 @@ Persistido em: `localStorage["@Enki:scribeMode"]`
 6. **Testes:** O projeto não possui testes automatizados. Verificação é manual via emuladores Firebase. Cada subitem de backlog (feature) deve ter solicitação de verificação
 7. **Firestore Rules:** Arquivo `firestore.rules` na raiz — manter atualizado com novas features.
 8. **BACKLOG.md Rules:** Sempre fazer check após a aprovação de uma feature.
-
+9. **Segurança e Prioridades:** A cada recomendação de segurança identificada para o futuro, o item correspondente no backlog deve ser criado imediatamente com a tag `[PRIORIDADE: SEGURANÇA]`.
 
 ---
 

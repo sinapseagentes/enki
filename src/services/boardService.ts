@@ -84,13 +84,20 @@ export const updateBoardCustomFields = async (boardId: string, customFieldDefini
 };
 
 
-export const subscribeToBoard = (boardId: string, callback: (board: Board) => void) => {
+export const subscribeToBoard = (boardId: string, callback: (board: Board) => void, errorCallback?: (error: Error) => void) => {
   const boardRef = doc(db, BOARDS_COLLECTION, boardId);
-  return onSnapshot(boardRef, (snapshot) => {
-    if (snapshot.exists()) {
-      callback({ id: snapshot.id, ...snapshot.data() } as Board);
+  return onSnapshot(
+    boardRef, 
+    (snapshot) => {
+      if (snapshot.exists()) {
+        callback({ id: snapshot.id, ...snapshot.data() } as Board);
+      }
+    },
+    (error) => {
+      console.error("Error subscribing to board:", error);
+      if (errorCallback) errorCallback(error);
     }
-  });
+  );
 };
 
 export const getMembersProfile = async (uids: string[]) => {
@@ -127,6 +134,6 @@ export const getBoards = async (userId?: string) => {
     ? query(collection(db, BOARDS_COLLECTION), where("members", "array-contains", userId))
     : collection(db, BOARDS_COLLECTION);
   
-  const snapshot = await getDocs(q as any);
+  const snapshot = await getDocs(q as import("firebase/firestore").Query<import("firebase/firestore").DocumentData>);
   return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as object) } as Board));
 };

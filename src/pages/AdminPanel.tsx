@@ -64,8 +64,8 @@ export const AdminPanel = () => {
       // Re-fetch users so the table is populated correctly
       const allUsers = await getAllUsers();
       setUsers(allUsers);
-    } catch (err: any) {
-      alert("Erro ao se promover: " + err.message);
+    } catch (err: unknown) {
+      alert("Erro ao se promover: " + (err instanceof Error ? err.message : "Erro desconhecido"));
     }
   };
 

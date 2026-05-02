@@ -18,6 +18,8 @@ export interface UserProfile {
   storageMetrics?: { totalBytes: number }; // How much total storage this user consumes across all boards
 }
 
+export type CustomFieldValue = string | number | boolean | string[] | null;
+
 export type CustomFieldType = 'text' | 'number' | 'date' | 'select' | 'checkbox';
 
 export interface CustomFieldDefinition {
@@ -126,7 +128,7 @@ export interface Card {
     [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer';
   }; // Permission levels for card access (overrides board permissions)
   storageMetrics?: StorageMetrics; // Storage used by this card
-  customFieldValues?: Record<string, any>; // fieldId -> value
+  customFieldValues?: Record<string, CustomFieldValue>; // fieldId -> value
 }
 
 export interface Message {

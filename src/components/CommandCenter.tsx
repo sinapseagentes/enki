@@ -5,6 +5,7 @@ import { subscribeToMessages, sendMessage } from "../services/messageService";
 import { subscribeToPresence, isUserOnline } from "../services/presenceService";
 import { useAuth } from "../contexts/AuthContext";
 import type { Activity, AppNotification, Message, UserProfile } from "../types";
+import DOMPurify from "dompurify";
 
 interface CommandCenterProps {
   boardId: string;
@@ -22,7 +23,7 @@ export const CommandCenter = ({ boardId, members, initialTab = "activities", onC
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedRecipient, setSelectedRecipient] = useState<UserProfile | null>(null);
   const [newMessage, setNewMessage] = useState("");
-  const [presenceMap, setPresenceMap] = useState<Record<string, any>>({});
+  const [presenceMap, setPresenceMap] = useState<Record<string, UserProfile>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,17 +97,18 @@ export const CommandCenter = ({ boardId, members, initialTab = "activities", onC
 
   const renderActivityMessage = (activity: Activity) => {
     const { type, details, userName } = activity;
+    const safeUserName = DOMPurify.sanitize(userName);
     switch (type) {
       case "card_created":
-        return <span><strong>{userName}</strong> criou <strong>"{details.cardTitle}"</strong></span>;
+        return <span><strong>{safeUserName}</strong> criou <strong>"{DOMPurify.sanitize(details.cardTitle)}"</strong></span>;
       case "card_moved":
-        return <span><strong>{userName}</strong> moveu <strong>"{details.cardTitle}"</strong> para <em>{details.toList}</em></span>;
+        return <span><strong>{safeUserName}</strong> moveu <strong>"{DOMPurify.sanitize(details.cardTitle)}"</strong> para <em>{DOMPurify.sanitize(details.toList)}</em></span>;
       case "list_created":
-        return <span><strong>{userName}</strong> criou a lista <strong>"{details.listTitle}"</strong></span>;
+        return <span><strong>{safeUserName}</strong> criou a lista <strong>"{DOMPurify.sanitize(details.listTitle)}"</strong></span>;
       case "card_archived":
-        return <span><strong>{userName}</strong> arquivou <strong>"{details.cardTitle}"</strong></span>;
+        return <span><strong>{safeUserName}</strong> arquivou <strong>"{DOMPurify.sanitize(details.cardTitle)}"</strong></span>;
       default:
-        return <span>{userName} realizou uma ação.</span>;
+        return <span>{safeUserName} realizou uma ação.</span>;
     }
   };
 
@@ -263,7 +265,7 @@ export const CommandCenter = ({ boardId, members, initialTab = "activities", onC
                       messages.map(msg => (
                         <div key={msg.id} className={`flex flex-col ${msg.senderId === user?.uid ? 'items-end' : 'items-start'}`}>
                           <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.senderId === user?.uid ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-bl-none'}`}>
-                            {msg.text}
+                            {DOMPurify.sanitize(msg.text)}
                           </div>
                           <span className="text-[8px] text-gray-400 mt-1 uppercase font-bold">{formatTime(msg.createdAt)}</span>
                         </div>

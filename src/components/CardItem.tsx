@@ -1,34 +1,37 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Card, Tag, CustomFieldDefinition } from "../types";
+import type { Card, Tag, CustomFieldDefinition, UserProfile } from "../types";
 import { archiveCard, restoreCard } from "../services/cardService";
+import DOMPurify from "dompurify";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface CardItemProps {
   card: Card & { isFilteredOut?: boolean };
   tags?: Tag[];
-  currentUserProfile?: any;
+  currentUserProfile?: UserProfile;
   customFieldDefinitions?: CustomFieldDefinition[];
-  onClick: () => void;
+  onClick: (card: Card) => void;
+  isDragOverlay?: boolean;
 }
 
-export const CardItem = ({ card, tags, currentUserProfile, customFieldDefinitions, onClick }: CardItemProps) => {
+export const CardItem = ({ card, tags, currentUserProfile, customFieldDefinitions, onClick, isDragOverlay }: CardItemProps) => {
+  const { theme, scribeMode } = useTheme();
+
   const {
+    setNodeRef,
     attributes,
     listeners,
-    setNodeRef,
     transform,
     transition,
     isDragging,
   } = useSortable({
     id: card.id!,
-    data: {
-      type: "card",
-      card,
-    },
+    data: { type: "card", card },
+    disabled: isDragOverlay,
   });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
+    transform: CSS.Transform.toString(transform),
     transition,
   };
 
@@ -69,18 +72,32 @@ export const CardItem = ({ card, tags, currentUserProfile, customFieldDefinition
     return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   };
 
+  if (isDragging && !isDragOverlay) {
+    // Placeholder transparente no local original
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="bg-blue-100/30 dark:bg-blue-900/20 border-2 border-dashed border-blue-400 rounded-xl mb-2 h-16"
+      />
+    );
+  }
+
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      onClick={onClick}
-      className={`group rounded shadow-sm border mb-2 cursor-pointer transition-shadow relative overflow-hidden ${
-        card.archived ? "bg-theme-surface/50 border-theme opacity-75 grayscale" : "bg-theme-card border-theme"
-      } ${isDragging ? "opacity-30 border-blue-500 border-2" : "hover:shadow-md"} ${
-        card.isFilteredOut ? "opacity-10 scale-95 pointer-events-none blur-[1px]" : "opacity-100"
-      }`}
-      {...attributes}
-      {...listeners}
+      ref={!isDragOverlay ? setNodeRef : undefined}
+      style={!isDragOverlay ? style : undefined}
+      {...(!isDragOverlay ? attributes : {})}
+      {...(!isDragOverlay ? listeners : {})}
+      onClick={() => onClick(card)}
+      className={`relative group bg-theme-surface p-3 rounded-xl shadow-sm border mb-2 ${
+        scribeMode 
+          ? 'border-theme hover:border-amber-500' 
+          : 'border-theme-hover hover:border-blue-400'
+      } cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow
+        ${isDragOverlay ? 'shadow-2xl scale-105 rotate-2 ring-2 ring-blue-500' : ''}
+        ${card.isFilteredOut ? 'opacity-30 grayscale' : ''}
+      `}
     >
       {card.colorLabel && !card.coverUrl && (
         <div className="h-2 w-full" style={{ backgroundColor: card.colorLabel }} />
@@ -127,7 +144,7 @@ export const CardItem = ({ card, tags, currentUserProfile, customFieldDefinition
       ) : null}
 
       <div className="p-3">
-        <p className="text-sm text-theme-main break-words pr-6">{card.title}</p>
+        <p className="text-sm text-theme-main break-words pr-6">{DOMPurify.sanitize(card.title)}</p>
 
         {/* Badges: description icon + due date + attachments */}
         {(card.description || card.dueDate || (card.attachments && card.attachments.length > 0)) && (

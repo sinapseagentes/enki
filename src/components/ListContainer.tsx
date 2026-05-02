@@ -2,10 +2,11 @@ import { useState, useRef } from "react";
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CardItem } from "./CardItem";
-import type { List, Card, Tag, CustomFieldDefinition } from "../types";
+import type { List, Card, Tag, CustomFieldDefinition, UserProfile } from "../types";
 import { archiveList, restoreList, updateListTitle, updateList } from "../services/listService";
 import { COLORS } from "../constants/design";
 import { useTheme } from "../contexts/ThemeContext";
+import DOMPurify from "dompurify";
 
 interface ListContainerProps {
   list: List;
@@ -13,7 +14,7 @@ interface ListContainerProps {
   tags?: Tag[];
   onAddCard: (listId: string, title: string) => void;
   onCardClick: (card: Card) => void;
-  currentUserProfile?: any;
+  currentUserProfile?: UserProfile;
   customFieldDefinitions?: CustomFieldDefinition[];
 }
 
@@ -21,23 +22,21 @@ export const ListContainer = ({ list, cards, tags, onAddCard, onCardClick, curre
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const { scribeMode } = useTheme();
+
   const {
+    setNodeRef,
     attributes,
     listeners,
-    setNodeRef,
     transform,
     transition,
     isDragging,
   } = useSortable({
     id: list.id!,
-    data: {
-      type: "list",
-      list,
-    },
+    data: { type: "list", list },
   });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
+    transform: CSS.Transform.toString(transform),
     transition,
   };
 
@@ -116,9 +115,9 @@ export const ListContainer = ({ list, cards, tags, onAddCard, onCardClick, curre
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-theme-surface rounded-lg flex flex-col flex-shrink-0 max-h-full border border-theme shadow-sm transition-all duration-300 animate-slide-up ${
+      className={`bg-theme-surface rounded-lg flex flex-col flex-shrink-0 max-h-full border border-theme shadow-sm transition-all duration-300 ${
         list.isCollapsed ? 'w-12 h-[500px]' : 'w-72'
-      } ${isDragging ? "opacity-30 border-blue-500 border-2" : ""} ${list.archived ? "opacity-75" : ""}`}
+      } ${isDragging ? 'opacity-40 ring-2 ring-blue-400' : ''} ${list.archived ? "opacity-75" : ""}`}
     >
       {/* Top Color Bar */}
       <div 
@@ -148,20 +147,20 @@ export const ListContainer = ({ list, cards, tags, onAddCard, onCardClick, curre
       {/* List Header */}
       <div className={`p-3 flex items-center justify-between group/header ${list.isCollapsed ? 'flex-col h-full py-4' : ''}`}>
         <div className={`flex items-center gap-2 flex-1 ${list.isCollapsed ? 'flex-col' : ''}`}>
-          <div 
-            {...attributes} 
-            {...listeners} 
-            className={`cursor-grab text-gray-400 hover:text-blue-500 transition-colors ${list.isCollapsed ? 'mb-4' : ''}`}
+          {/* Drag Handle */}
+          <div
+            {...attributes}
+            {...listeners}
+            className={`cursor-grab active:cursor-grabbing text-gray-400 hover:text-blue-500 transition-colors ${list.isCollapsed ? 'mb-4' : ''}`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" /></svg>
           </div>
-          
           {list.isCollapsed ? (
             <h2 
               className="text-sm font-bold text-gray-400 dark:text-gray-500 [writing-mode:vertical-lr] rotate-180 uppercase tracking-widest cursor-pointer"
               onClick={handleToggleCollapse}
             >
-              {list.title}
+              {DOMPurify.sanitize(list.title)}
             </h2>
           ) : (
             isEditingTitle ? (
@@ -179,7 +178,7 @@ export const ListContainer = ({ list, cards, tags, onAddCard, onCardClick, curre
                 onClick={startEditTitle}
                 className="text-sm font-bold text-gray-800 dark:text-white cursor-pointer hover:text-blue-600 transition-colors truncate max-w-[180px]"
               >
-                {list.title}
+                {DOMPurify.sanitize(list.title)}
               </h2>
             )
           )}
@@ -222,19 +221,19 @@ export const ListContainer = ({ list, cards, tags, onAddCard, onCardClick, curre
       {!list.isCollapsed && (
         <div className="px-2 py-1 flex-1 overflow-y-auto min-h-[50px]">
           <SortableContext
-            items={cards.map((c) => c.id!)}
+            items={cards.map(c => c.id!)}
             strategy={verticalListSortingStrategy}
           >
-                {cards.map((card) => (
-                  <CardItem 
-                    key={card.id} 
-                    card={card} 
-                    tags={tags}
-                    currentUserProfile={currentUserProfile}
-                    customFieldDefinitions={customFieldDefinitions}
-                    onClick={() => onCardClick(card)} 
-                  />
-                ))}
+            {cards.map((card) => (
+              <CardItem 
+                key={card.id} 
+                card={card} 
+                tags={tags}
+                currentUserProfile={currentUserProfile}
+                customFieldDefinitions={customFieldDefinitions}
+                onClick={() => onCardClick(card)} 
+              />
+            ))}
           </SortableContext>
         </div>
       )}

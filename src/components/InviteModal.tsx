@@ -52,8 +52,8 @@ export const InviteModal = ({ boardId, boardTitle, onClose }: InviteModalProps) 
       setSuccess(true);
       setEmail("");
       setTimeout(() => onClose(), 2000);
-    } catch (err: any) {
-      setError(err.message || "Erro ao convidar usuário. Verifique se o e-mail está correto.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro ao convidar usuário. Verifique se o e-mail está correto.");
     } finally {
       setIsInviting(false);
     }

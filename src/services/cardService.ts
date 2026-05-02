@@ -1,7 +1,7 @@
-import { collection, addDoc, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDoc, writeBatch } from "firebase/firestore";
 import type { DocumentData, QuerySnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import type { Card } from "../types";
+import type { Card, CustomFieldValue } from "../types";
 import { executeAutomations } from "./automationService";
 
 const CARDS_COLLECTION = "cards";
@@ -70,7 +70,16 @@ export const updateCard = async (cardId: string, updates: Partial<Card>) => {
   }
 };
 
-export const updateCardCustomFields = async (cardId: string, customFieldValues: Record<string, any>) => {
+export const updateCardsOrderBatch = async (updates: { id: string, order: number, listId: string }[]) => {
+  const batch = writeBatch(db);
+  updates.forEach(update => {
+    const cardRef = doc(db, CARDS_COLLECTION, update.id);
+    batch.update(cardRef, { order: update.order, listId: update.listId });
+  });
+  await batch.commit();
+};
+
+export const updateCardCustomFields = async (cardId: string, customFieldValues: Record<string, CustomFieldValue>) => {
   const cardRef = doc(db, CARDS_COLLECTION, cardId);
   await updateDoc(cardRef, { customFieldValues });
 };
@@ -99,12 +108,16 @@ export const deleteCard = async (cardId: string) => {
  * Move um cartão para um novo quadro e/ou nova lista
  */
 export const moveCard = async (cardId: string, targetBoardId: string, targetListId: string, newOrder: number = 0) => {
+  const batch = writeBatch(db);
   const cardRef = doc(db, CARDS_COLLECTION, cardId);
-  await updateDoc(cardRef, {
+  
+  batch.update(cardRef, {
     boardId: targetBoardId,
     listId: targetListId,
     order: newOrder
   });
+
+  await batch.commit();
 
   const card = await getCard(cardId);
   if (card) {
@@ -116,6 +129,9 @@ export const moveCard = async (cardId: string, targetBoardId: string, targetList
  * Cria uma cópia de um cartão em um destino específico
  */
 export const copyCard = async (card: Card, targetBoardId: string, targetListId: string, newOrder: number = 0) => {
+  const batch = writeBatch(db);
+  const newCardRef = doc(collection(db, CARDS_COLLECTION));
+  
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { id, ...cardData } = card;
   const newCard = {
@@ -127,6 +143,8 @@ export const copyCard = async (card: Card, targetBoardId: string, targetListId: 
     title: `${card.title} (Cópia)`
   };
 
-  const docRef = await addDoc(collection(db, CARDS_COLLECTION), newCard);
-  return docRef.id;
+  batch.set(newCardRef, newCard);
+  await batch.commit();
+  
+  return newCardRef.id;
 };
