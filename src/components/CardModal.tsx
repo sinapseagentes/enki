@@ -13,6 +13,8 @@ import { useTheme } from "../contexts/ThemeContext";
 import { updateStorageMetrics } from "../services/metricsService";
 import confetti from "canvas-confetti";
 import DOMPurify from "dompurify";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface CardModalProps {
   card: Card;
@@ -60,6 +62,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
   const [cardPermissions, setCardPermissions] = useState<{ [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer' }>(card.permissions || {});
   const [showPermissions, setShowPermissions] = useState(false);
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, CustomFieldValue>>(card.customFieldValues || {});
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
 
   const toggleTag = (tagId: string) => {
     setSelectedTagIds(prev => 
@@ -593,12 +596,43 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
                   Descrição
                 </h3>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Adicione uma descrição mais detalhada..."
-                  className="w-full h-32 px-3 py-2 bg-theme-surface text-theme-main border border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
-                />
+                <div className="group relative">
+                  {isEditingDescription ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Adicione uma descrição mais detalhada usando Markdown..."
+                        className="w-full h-48 px-3 py-2 bg-theme-surface text-theme-main border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none font-mono"
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          onClick={() => setIsEditingDescription(false)}
+                          className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 font-bold"
+                        >
+                          Visualizar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div 
+                      onClick={() => setIsEditingDescription(true)}
+                      className="min-h-[100px] w-full px-3 py-2 bg-theme-surface border border-theme rounded-md cursor-text hover:border-gray-400 transition-colors prose prose-sm dark:prose-invert max-w-none text-theme-main"
+                    >
+                      {description ? (
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {DOMPurify.sanitize(description)}
+                        </ReactMarkdown>
+                      ) : (
+                        <span className="text-theme-secondary italic text-sm">Adicione uma descrição detalhada (Markdown disponível)...</span>
+                      )}
+                      <button className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-theme-card p-1 rounded border border-theme shadow-sm text-theme-secondary hover:text-blue-500 transition-all">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Custom Fields Section */}
@@ -618,7 +652,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                           <div className="relative flex items-center">
                             <input 
                               type="text" 
-                              value={customFieldValues[field.id] || ""}
+                              value={(customFieldValues[field.id] as string | number) || ""}
                               onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.value})}
                               placeholder="..."
                               className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-white"
@@ -630,7 +664,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                           <div className="relative flex items-center">
                             <input 
                               type="number" 
-                              value={customFieldValues[field.id] || ""}
+                              value={(customFieldValues[field.id] as string | number) || ""}
                               onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.value})}
                               className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-white"
                             />
@@ -640,14 +674,14 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                         {field.type === 'date' && (
                           <input 
                             type="date" 
-                            value={customFieldValues[field.id] || ""}
+                            value={(customFieldValues[field.id] as string | number) || ""}
                             onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.value})}
                             className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-white"
                           />
                         )}
                         {field.type === 'select' && (
                           <select 
-                            value={customFieldValues[field.id] || ""}
+                            value={(customFieldValues[field.id] as string | number) || ""}
                             onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.value})}
                             className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-white"
                           >
@@ -661,7 +695,7 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                           <div className="flex items-center gap-2 py-1">
                             <input 
                               type="checkbox" 
-                              checked={customFieldValues[field.id] || false}
+                              checked={(customFieldValues[field.id] as boolean) || false}
                               onChange={(e) => setCustomFieldValues({...customFieldValues, [field.id]: e.target.checked})}
                               className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
                             />
@@ -894,7 +928,23 @@ export const CardModal = ({ card, board, boardMembers, onClose }: CardModalProps
                           </div>
                         ) : (
                           <>
-                            <p className="text-sm text-theme-main whitespace-pre-wrap">{DOMPurify.sanitize(comment.text)}</p>
+                            <div className="prose prose-sm dark:prose-invert max-w-none text-theme-main">
+                              <ReactMarkdown 
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  strong: ({node, ...props}) => {
+                                    // Highlight mentions
+                                    const text = String(props.children);
+                                    if (text.startsWith('@')) {
+                                      return <span className="text-blue-600 font-bold bg-blue-50 dark:bg-blue-900/30 px-1 rounded">{text}</span>
+                                    }
+                                    return <strong {...props} />
+                                  }
+                                }}
+                              >
+                                {DOMPurify.sanitize(comment.text)}
+                              </ReactMarkdown>
+                            </div>
                             {user?.uid === comment.userId && (
                               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button 

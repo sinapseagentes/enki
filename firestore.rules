@@ -46,22 +46,60 @@ service cloud.firestore {
       allow create: if hasWritePermission(request.resource.data.boardId);
       allow update, delete: if hasWritePermission(resource.data.boardId);
     }
+    // 🛡️ Atividades
     match /activities/{activityId} {
       allow read: if isAuthenticated() && isBoardMember(resource.data.boardId);
       allow create: if hasWritePermission(request.resource.data.boardId);
       allow update, delete: if hasWritePermission(resource.data.boardId);
     }
 
-    // 🛡️ Profiles de Usuários
-    match /users/{userId} {
-      allow read: if isAuthenticated() || (hasValidAuth() && request.auth.uid == userId);
-      allow create: if hasValidAuth() && request.auth.uid == userId;
-      allow update, delete: if isAuthenticated() && request.auth.uid == userId;
+    // 🛡️ Notificações (acessível apenas ao destinatário)
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
-    // Bloqueio Global
-    match /{document=**} {
-      allow read, write: if false;
+    // 🛡️ Presença (Permite que membros vejam quem está online)
+    match /presence/{presenceId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && presenceId == request.auth.uid;
     }
+
+    // 🛡️ Profiles de Usuários (Dados Públicos Estritos)
+    match /users/{userId} {
+      // Whitelist de campos: Apenas estes campos podem ser lidos por terceiros
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 🛡️ Dados Privados (Somente o próprio usuário)
+    match /userPrivate/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 🛡️ Lookup de Convites (Apenas para busca de UID por email)
+    match /userLookup/{email} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+    }
+  }
+
+  // Funções Auxiliares
+  function isAuthenticated() {
+    return request.auth != null;
+  }
+
+  function isBoardMember(boardId) {
+    return isAuthenticated() && 
+      exists(/databases/$(database)/documents/boards/$(boardId)) &&
+      request.auth.uid in get(/databases/$(database)/documents/boards/$(boardId)).data.members;
+  }
+
+  function hasWritePermission(boardId) {
+    let board = get(/databases/$(database)/documents/boards/$(boardId));
+    let role = board.data.permissions[request.auth.uid];
+    return role == 'owner' || role == 'admin' || role == 'editor';
   }
 }

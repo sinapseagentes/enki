@@ -11,7 +11,7 @@ Desenvolvimento de um clone do Trello usando as melhores práticas de **ACID, SO
 
 ## 📅 Status do Projeto
 
-Atualmente na **V17.1.0.0** — Todos os backlogs até **Sincronização & Portabilidade (Backlog 17)** estão entregues.
+Atualmente na **V17.3.0.0** — Todos os backlogs até **Segurança & Markdown (Backlog 17.3)** estão entregues.
 
 ### Backlogs Entregues
 
@@ -28,6 +28,7 @@ Atualmente na **V17.1.0.0** — Todos os backlogs até **Sincronização & Porta
 | 15      | Views (Table & Calendar)         | V15.0.0.0 |
 | 16      | Export iCal                      | V16.1.0.0 |
 | 17      | Export JSON/CSV & Kanban UX      | V17.1.0.0 |
+| 17.3    | Hardening de Segurança & Markdown | V17.3.0.0 |
 
 Para ver o progresso detalhado de cada Sprint e Feature, acesse:
 

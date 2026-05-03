@@ -108,16 +108,15 @@ export const getMembersProfile = async (uids: string[]) => {
 };
 
 export const inviteUserToBoard = async (boardId: string, email: string) => {
-  // Find user by email
-  const q = query(collection(db, USERS_COLLECTION), where("email", "==", email));
-  const snapshot = await getDocs(q);
+  const { getDoc } = await import("firebase/firestore");
+  const emailDocRef = doc(db, "userLookup", email.toLowerCase());
+  const emailDoc = await getDoc(emailDocRef);
    
-  if (snapshot.empty) {
+  if (!emailDoc.exists()) {
     throw new Error("Usuário não encontrado. Ele precisa ter feito login no aplicativo pelo menos uma vez.");
   }
    
-  const userDoc = snapshot.docs[0];
-  const uid = userDoc.data().uid;
+  const uid = emailDoc.data().uid;
 
   // Add uid to board members and set permission level
   const boardRef = doc(db, BOARDS_COLLECTION, boardId);

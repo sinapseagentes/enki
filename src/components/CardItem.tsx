@@ -15,7 +15,7 @@ interface CardItemProps {
 }
 
 export const CardItem = ({ card, tags, currentUserProfile, customFieldDefinitions, onClick, isDragOverlay }: CardItemProps) => {
-  const { theme, scribeMode } = useTheme();
+  const { scribeMode } = useTheme();
 
   const {
     setNodeRef,

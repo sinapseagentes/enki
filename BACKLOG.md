@@ -112,6 +112,18 @@ Este arquivo rastreia o desenvolvimento do Enki seguindo as regras de versioname
 
 ---
 
+## 🟢 Backlog 17.3 (Hardening de Segurança & Markdown) - [ENTREGUE]
+
+*Status: Concluído | Versão: V17.3.0.0*
+
+- [x] **Arquitetura 3-Tier de Dados**: Migração de dados sensíveis para `userPrivate` e lookup indexado em `userLookup`.
+- [x] **Zero Data Leakage**: Blindagem de payloads de rede em membros do board (Remoção de e-mails/métricas da coleção pública).
+- [x] **Markdown Seguro**: Suporte a Rich Text em Descrições e Comentários com sanitização via `DOMPurify` e `react-markdown`.
+- [x] **Migração Atômica**: Motor de migração automática no login para converter usuários antigos para o novo schema seguro.
+- [x] **Hardening de Regras**: Refatoração total do `firestore.rules` para eliminar erros de recursividade e vazamento de atributos.
+
+---
+
 ## 🔴 Próximos Backlogs (Planejados)
 
 1. **Backlog 16.2+ (Conexão com o Mundo Exterior):** V16.2.0.0

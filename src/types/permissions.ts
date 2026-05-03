@@ -1,3 +1,5 @@
+import type { Board } from "./index";
+
 export type PermissionLevel = 'owner' | 'admin' | 'editor' | 'viewer';
 
 export interface BoardPermissions {

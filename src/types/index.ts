@@ -5,7 +5,7 @@ export interface StorageMetrics {
 
 export interface UserProfile {
   uid: string;
-  email: string;
+  email?: string;
   displayName: string;
   photoURL: string;
   bio?: string;

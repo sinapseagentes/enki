@@ -100,15 +100,15 @@ export const CommandCenter = ({ boardId, members, initialTab = "activities", onC
     const safeUserName = DOMPurify.sanitize(userName);
     switch (type) {
       case "card_created":
-        return <span><strong>{safeUserName}</strong> criou <strong>"{DOMPurify.sanitize(details.cardTitle)}"</strong></span>;
+        return <span><strong>{safeUserName as string}</strong> criou <strong>"{DOMPurify.sanitize(details.cardTitle || "") as string}"</strong></span>;
       case "card_moved":
-        return <span><strong>{safeUserName}</strong> moveu <strong>"{DOMPurify.sanitize(details.cardTitle)}"</strong> para <em>{DOMPurify.sanitize(details.toList)}</em></span>;
+        return <span><strong>{safeUserName as string}</strong> moveu <strong>"{DOMPurify.sanitize(details.cardTitle || "") as string}"</strong> para <em>{DOMPurify.sanitize(details.toList || "") as string}</em></span>;
       case "list_created":
-        return <span><strong>{safeUserName}</strong> criou a lista <strong>"{DOMPurify.sanitize(details.listTitle)}"</strong></span>;
+        return <span><strong>{safeUserName as string}</strong> criou a lista <strong>"{DOMPurify.sanitize(details.listTitle || "") as string}"</strong></span>;
       case "card_archived":
-        return <span><strong>{safeUserName}</strong> arquivou <strong>"{DOMPurify.sanitize(details.cardTitle)}"</strong></span>;
+        return <span><strong>{safeUserName as string}</strong> arquivou <strong>"{DOMPurify.sanitize(details.cardTitle || "") as string}"</strong></span>;
       default:
-        return <span>{safeUserName} realizou uma ação.</span>;
+        return <span>{safeUserName as string} realizou uma ação.</span>;
     }
   };
 

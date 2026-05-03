@@ -65,26 +65,83 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const currentUser = result.user;
       const details = getAdditionalUserInfo(result);
       
-      const { doc, setDoc, updateDoc } = await import("firebase/firestore");
+      const { doc, updateDoc, writeBatch } = await import("firebase/firestore");
       
       if (details?.isNewUser) {
         // Apenas recria o documento no banco se for um cadastro NOVO e Genuíno.
-        await setDoc(doc(db, "users", currentUser.uid), {
+        const batch = writeBatch(db);
+        
+        // 1. Dados Públicos (Acessível a outros membros do board)
+        batch.set(doc(db, "users", currentUser.uid), {
           uid: currentUser.uid,
-          email: currentUser.email,
           displayName: currentUser.displayName,
           photoURL: currentUser.photoURL,
           lastLogin: Date.now()
         });
-      } else {
-        // Se já existia, só atualiza o lastLogin. Se o documento foi deletado por um admin, 
-        // isso vai falhar e o usuário NÃO será recriado, travando-o na tela de Acesso Negado.
-        try {
-          await updateDoc(doc(db, "users", currentUser.uid), {
-            lastLogin: Date.now()
+        
+        // 2. Dados Privados (Acessível apenas ao dono)
+        batch.set(doc(db, "userPrivate", currentUser.uid), {
+          email: currentUser.email,
+          storageMetrics: { totalBytes: 0 },
+          role: 'user'
+        });
+        
+        // 3. Lookup de E-mail (Acessível para busca exata via inviteUserToBoard)
+        if (currentUser.email) {
+          batch.set(doc(db, "userLookup", currentUser.email.toLowerCase()), {
+            uid: currentUser.uid
           });
+        }
+        
+        await batch.commit();
+      } else {
+        // Usuário já existente: migra dados sensíveis para userPrivate (se ainda não migrado)
+        // e garante que userLookup existe
+        try {
+          const { getDoc, deleteField } = await import("firebase/firestore");
+          
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const userSnap = await getDoc(userDocRef);
+          
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            const needsMigration = userData.email !== undefined || userData.storageMetrics !== undefined;
+            
+            if (needsMigration) {
+              const migrationBatch = writeBatch(db);
+              
+              // Remove campos sensíveis do documento público
+              migrationBatch.update(userDocRef, {
+                email: deleteField(),
+                storageMetrics: deleteField(),
+                role: deleteField(),
+                storageLimit: deleteField(),
+                lastLogin: Date.now()
+              });
+              
+              // Garante que userPrivate existe com os dados corretos
+              const privateRef = doc(db, "userPrivate", currentUser.uid);
+              migrationBatch.set(privateRef, {
+                email: currentUser.email,
+                storageMetrics: userData.storageMetrics || { totalBytes: 0 },
+                role: userData.role || 'user'
+              }, { merge: true });
+              
+              // Garante que userLookup existe
+              if (currentUser.email) {
+                const lookupRef = doc(db, "userLookup", currentUser.email.toLowerCase());
+                migrationBatch.set(lookupRef, { uid: currentUser.uid }, { merge: true });
+              }
+              
+              await migrationBatch.commit();
+              console.log("✅ Migração de dados privados concluída.");
+            } else {
+              // Já migrado: só atualiza o lastLogin
+              await updateDoc(userDocRef, { lastLogin: Date.now() });
+            }
+          }
         } catch (e) {
-          console.warn("Usuário banido tentou fazer login. Bloqueado pelo Firestore Rules.");
+          console.warn("Usuário banido ou erro de migração:", e);
         }
       }
     } catch (error) {

@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { UserProfile } from "../types";
 

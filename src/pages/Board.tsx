@@ -16,8 +16,8 @@ import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { subscribeToLists, createList, updateListOrder } from "../services/listService";
-import { subscribeToCards, createCard, updateCard } from "../services/cardService";
+import { subscribeToLists, createList } from "../services/listService";
+import { subscribeToCards, createCard } from "../services/cardService";
 import { subscribeToBoard, getMembersProfile, updateBoardBackground } from "../services/boardService";
 import { logActivity } from "../services/activityService";
 import { subscribeToPresence, isUserOnline } from "../services/presenceService";
@@ -32,7 +32,7 @@ import { AutomationModal } from "../components/AutomationModal";
 import { CommandCenter } from "../components/CommandCenter";
 import { TableView } from "../components/TableView";
 import { CalendarView } from "../components/CalendarView";
-import type { List, Card, Board } from "../types";
+import type { List, Card, Board, UserProfile } from "../types";
 import { COLORS, GRADIENTS } from "../constants/design";
 
 export const BoardPage = () => {
@@ -75,7 +75,7 @@ export const BoardPage = () => {
         setBoard(fetchedBoard);
         setBoardError(null);
       },
-      (error) => {
+      () => {
         setBoardError("access_denied");
       }
     );
@@ -98,7 +98,7 @@ export const BoardPage = () => {
   useEffect(() => {
     if (board?.members && board.members.length > 0) {
       getMembersProfile(board.members).then(profiles => {
-        setMembers(profiles);
+        setMembers(profiles as UserProfile[]);
       });
       
       const unsubscribePresence = subscribeToPresence(board.members, (profiles) => {
