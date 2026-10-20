@@ -1,268 +1,268 @@
-# System Prompt — Enki Project
+---
+documento: prompt
+versão: 1.1
+revisão: 2026-10-05
+hash-pendente: <a calcular após aprovação>
+autoridade: protocolo
+projeto: Enki
+documento-superior: cursorrules.md v1.1
+sintaxe-templates: mustache.js v4.x
+---
 
-Você é o assistente de desenvolvimento do **Enki**, um clone premium do Trello com temática Suméria opcional ("Modo Escriba"). O projeto segue práticas de **ACID, SOLID, SCRUM, UI/UX e Secure by Design (SbD)**.
+# 📐 PROTOCOLO DE ORDENS DE SERVIÇO PARAMETRIZADAS — Projeto Enki
+
+> Este documento define o **protocolo permanente** de geração,
+> materialização e execução de Ordens de Serviço (OSs) no projeto
+> Enki. Ele é executado SOB as Regras de Ouro do `cursorrules.md`
+> (v1.1 ou superior).
+>
+> Em qualquer conflito, vale a Hierarquia de Autoridade definida em
+> `cursorrules.md §10`.
 
 ---
 
-## Identidade do Projeto
+## 1. 🎯 PROPÓSITO
 
-- **Nome:** Enki (anteriormente "Ollert")
-- **Propósito:** Kanban board colaborativo premium, multi-usuário, com automação e permissões
-- **Versão atual:** V17.1.0.0
-- **Versionamento:** `Vx.y.z.k` (x=major, y=backlog/sprint, z=feature, k=bugfix)
+Padronizar o ciclo completo de uma OS no Enki, de modo que:
 
----
-
-## Stack Tecnológica
-
-| Camada         | Tecnologia                              |
-| -------------- | --------------------------------------- |
-| **Frontend**   | React 19 + TypeScript 6 + Vite 8        |
-| **Estilização** | Tailwind CSS v4 + Vanilla CSS          |
-| **Backend**    | Firebase (Auth, Firestore, Storage)     |
-| **DnD**        | @dnd-kit/core + @dnd-kit/sortable       |
-| **Animações**  | CSS Transitions + canvas-confetti       |
-| **Roteamento** | react-router-dom v7                     |
-| **Build**      | Vite com @vitejs/plugin-react           |
+- Todo pedido do Product Owner gere uma OS **rastreável e auditável**.
+- O Antigravity execute apenas instruções **resolvidas, validadas e
+  ancoradas** no `cursorrules.md`.
+- Nenhum placeholder Mustache vaze para o repositório.
+- Nenhuma decisão "plausível" sem `[PROVENANCE]` seja aceita
+  (cursorrules §8.7 + §9).
 
 ---
 
-## Arquitetura do Projeto
+## 2. 🧭 FLUXO CANÔNICO DA OS
 
-```text
-src/
-├── App.tsx                  # Root: AuthProvider → ThemeProvider → NotificationProvider → Router
-├── main.tsx                 # Entry point
-├── index.css                # Global CSS + theme variables + Tailwind v4
-├── App.css                  # App-specific styles
-│
-├── components/
-│   ├── ActivityLog.tsx      # Log de atividades (usado no Board)
-│   ├── AutomationModal.tsx  # CRUD de regras de automação (Butler)
-│   ├── CardItem.tsx         # Item visual do cartão (sortable)
-│   ├── CardModal.tsx        # Modal detalhado: título, descrição, checklist, comentários, anexos, tags, mover/copiar
-│   ├── CommandCenter.tsx    # Painel lateral: Atividades + Notificações + Mensagens (3 tabs)
-│   ├── InviteModal.tsx      # Convite de usuário por email
-│   ├── ListContainer.tsx    # Coluna de lista (sortable, contém CardItems)
-│   ├── NotificationBell.tsx # Sino de notificações na navbar
-│   ├── PrivateRoute.tsx     # Wrapper de rota autenticada
-│   └── SettingsModal.tsx    # Configurações: tema, tags, permissões, Modo Escriba
-│
-├── contexts/
-│   ├── AuthContext.tsx       # Firebase Auth (Google Login) + useAuth()
-│   ├── NotificationContext.tsx # Toast notifications + useNotification()
-│   └── ThemeContext.tsx      # Light/Dark + Scribe Mode + localStorage persist
-│
-├── constants/
-│   └── design.ts            # COLORS[], GRADIENTS[] (paleta do app)
-│
-├── lib/
-│   └── firebase.ts          # Firebase config + db/auth/storage exports
-│
-├── pages/
-│   ├── Board.tsx            # Página principal: navbar + DnD + listas + filtros + modais
-│   ├── Dashboard.tsx        # Hub de boards: criar, arquivar, restaurar, deletar
-│   └── Login.tsx            # Login social (Google)
-│
-├── services/                # Camada de acesso ao Firestore
-│   ├── activityService.ts   # logActivity(), subscribeToActivities()
-│   ├── automationService.ts # CRUD automations + executeAutomations() engine
-│   ├── boardService.ts      # CRUD boards + permissions + tags + invite + members
-│   ├── cardService.ts       # CRUD cards + moveCard() + copyCard() + archive/restore
-│   ├── commentService.ts    # CRUD comments com real-time
-│   ├── listService.ts       # CRUD lists + subscribeToLists()
-│   ├── messageService.ts    # Mensagens diretas entre membros
-│   ├── notificationService.ts # Push notifications + markAsRead
-│   ├── storageService.ts    # Upload de arquivos ao Firebase Storage
-│   └── userService.ts       # Perfil de usuário (createOrUpdateUser)
-│
-└── types/
-    ├── index.ts             # Interfaces: Board, Card, List, Comment, Activity, etc.
-    ├── automation.ts        # Automation, AutomationTriggerType, AutomationActionType
-    └── permissions.ts       # PermissionLevel, BoardPermissions
+```
+┌─────────────────────────────────────────┐
+│ 1. Product Owner preenche briefing      │
+│    docs/REQUEST-OS-TEMPLATE.md          │
+└─────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│ 2. Oráculo recebe briefing e responde   │
+│    com Bloco A (parâmetros) +           │
+│    Bloco B (instrução de materialização)│
+└─────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│ 3. Product Owner revisa Bloco A         │
+│    (corrige se necessário) e aprova     │
+└─────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│ 4. Antigravity:                         │
+│    a. Localiza template em              │
+│       docs/templates/                   │
+│    b. Renderiza via mustache.js v4.x    │
+│    c. Valida (regex + engine)           │
+│    d. Salva em docs/orders/             │
+│    e. Executa, parando nos Gates        │
+└─────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│ 5. DoD verificada → OS [EXECUTADA]      │
+│    + commit/tag conforme aplicável      │
+└─────────────────────────────────────────┘
 ```
 
 ---
 
-## Rotas
+## 3. 🔧 ENGINE MUSTACHE OFICIAL
 
-| Rota          | Componente    | Acesso       |
-| ------------- | ------------- | ------------ |
-| `/login`      | `Login`       | Público      |
-| `/`           | `Dashboard`   | Autenticado  |
-| `/board/:id`  | `BoardPage`   | Autenticado  |
+### 3.1. Engine canônico
+- **Implementação:** [`mustache.js`](https://github.com/janl/mustache.js)
+  versão `^4.2.0`.
+- **Justificativa:** padrão de mercado, manutenção ativa, sem
+  dependências, especificação Mustache 1.4 completa.
+- **Alternativa permitida:** apenas se documentada via ADR em
+  `docs/governance/`.
+
+### 3.2. Sintaxe oficial de placeholders
+
+| Tipo | Sintaxe | Renderização |
+|---|---|---|
+| Simples | `{{NOME_PARAMETRO}}` | substituído por valor único |
+| Lista (seção positiva) | `{{#LISTA_NOME}}...{{/LISTA_NOME}}` | repetido por item |
+| Condicional positiva | `{{#IF_X}}...{{/IF_X}}` | incluído se truthy |
+| Condicional negativa | `{{^IF_X}}...{{/IF_X}}` | incluído se falsy |
+| Comentário | `{{! texto }}` | renderizado como vazio |
+
+### 3.3. Convenção de nomenclatura
+- **Variáveis simples:** `UPPER_SNAKE_CASE` (ex.: `TITULO_OS`).
+- **Listas:** prefixo `LISTA_` (ex.: `LISTA_INCLUI`).
+- **Flags booleanas:** prefixo `IF_` (ex.: `IF_TOCA_FIRESTORE_RULES`).
 
 ---
 
-## Modelos de Dados (Firestore)
+## 4. 🛡️ VALIDAÇÃO DE PLACEHOLDERS (REGRA INVIOLÁVEL)
 
-### Board
+### 4.1. Após renderização pelo engine
 
-```typescript
-interface Board {
-  id?: string;
-  title: string;
-  ownerId: string;
-  members: string[];          // UIDs
-  permissions?: { [userId: string]: 'owner' | 'admin' | 'editor' | 'viewer' };
-  tags?: Tag[];               // Board-level tags
-  background?: string;        // Gradient class ou hex color
-  archived?: boolean;
-  createdAt: number;
-  updatedAt: number;
-}
+Antes de salvar QUALQUER OS materializada em `docs/orders/`, o
+Antigravity DEVE executar a sequência abaixo **na ordem**:
+
+#### Passo 1 — Validação de parâmetros não-resolvidos
+
+Aplicar a regex:
+
+```regex
+\{\{(?![!#/^])[^}]+\}\}
 ```
 
-### Card
+> 📌 **Por que esta regex e não a anterior:**
+> - `(?![!#/^])` = lookahead negativo que ignora **comentários**
+>   (`{{!}}`), **aberturas** (`{{#}}`), **fechamentos** (`{{/}}`) e
+>   **inversões** (`{{^}}`).
+> - Captura **apenas** placeholders simples não-resolvidos
+>   (`{{NOME}}`).
+> - Resolve o falso-positivo que existia na regex `\{\{[^}]+\}\}`
+>   da v1.0.
 
-```typescript
-interface Card {
-  id?: string;
-  listId: string;
-  boardId: string;
-  title: string;
-  description?: string;
-  colorLabel?: string;        // Hex color
-  tagIds?: string[];          // References to Board.tags[].id
-  dueDate?: number;           // Timestamp
-  checklists?: ChecklistItem[];
-  attachments?: Attachment[];
-  coverUrl?: string;
-  order: number;
-  archived?: boolean;
-  permissions?: { [userId: string]: PermissionLevel };
-  createdAt: number;
-}
+Se houver QUALQUER ocorrência:
+- **ABORTAR** imediatamente.
+- **NÃO SALVAR** o arquivo.
+- Reportar no chat:
+  - Quantidade de placeholders pendentes.
+  - Lista exata de cada um.
+  - Linha onde aparecem.
+- Aguardar nova OS corrigida.
+
+#### Passo 2 — Validação de seções remanescentes
+
+Aplicar a regex:
+
+```regex
+\{\{[#/^][^}]+\}\}
 ```
 
-### Automation
+Se houver QUALQUER ocorrência:
+- **ABORTAR** com mensagem específica:
+  > *"Falha de engine Mustache: aberturas/fechamentos de seção
+  > remanescentes. Verificar se o engine `mustache.js` foi invocado
+  > corretamente, ou se a OS forneceu o array/flag esperado."*
+- Esta falha é **diferente** da anterior: indica que o **engine**
+  falhou, não que o **parâmetro** está faltando.
 
-```typescript
-type AutomationTriggerType = 'card_moved' | 'card_created' | 'card_archived';
-type AutomationActionType = 'move' | 'add_label' | 'set_due_date';
+#### Passo 3 — Confirmação positiva
 
-interface Automation {
-  id?: string;
-  boardId: string;
-  trigger: AutomationTriggerType;
-  action: AutomationActionType;
-  config: { targetListId?; destinationListId?; label?; daysToDue? };
-  active: boolean;
-}
-```
+Se ambas as regex retornarem zero ocorrências:
+- Salvar o arquivo materializado.
+- Prosseguir com a execução da OS.
 
----
+### 4.2. Auto-validação adicional
 
-## Padrões e Convenções
+Além das regex acima, o Antigravity DEVE verificar:
 
-### Código
+- **Consistência de listas:** se um template usa `{{#LISTA_X}}` mas
+  o parâmetro `LISTA_X` não foi fornecido, abortar.
+- **Tipos esperados:** se um parâmetro deveria ser data UTC e veio em
+  outro formato, abortar.
+- **Caminhos de arquivo:** se a OS referencia caminhos que não existem
+  e não estão na lista de `LISTA_ARQUIVOS_CRIAR`, abortar.
+- **Coerência de versão:** `CURSORRULES_VERSAO_LIDA` deve ser
+  compatível com a versão do `cursorrules.md` no momento da execução.
 
-- **Linguagem:** TypeScript strict
-- **Componentes:** Functional components com hooks
-- **Estado:** React Context (Auth, Theme, Notification) — sem Redux
-- **Naming:** camelCase para variáveis/funções, PascalCase para componentes/tipos
-- **Services:** Uma função por operação Firestore, usando `onSnapshot` para real-time
-- **Exports:** Named exports (não default exports nos componentes)
-
-### Firebase
-
-- Coleções: `boards`, `cards`, `lists`, `comments`, `activities`, `notifications`, `messages`, `automations`, `users`
-- Real-time via `onSnapshot` com callbacks
-- Auth: Google Sign-In
-- Todas as operações são client-side (sem Cloud Functions)
-
-### Estilização
-
-- **Tailwind CSS v4** como base de utilidades
-- **CSS Variables** para temas (`--bg-primary`, `--text-primary`, etc.) via `data-theme`
-- Classes temáticas: `bg-theme-card`, `text-theme-main`, `border-theme`, etc.
-- **Modo Escriba (Scribe Mode):** tema alternativo com paleta âmbar/argila, ativado via `data-scribe-mode="true"` no body
-- Animações com classes `animate-in`, `fade-in`, `slide-in-from-*`, `zoom-in-*`
-- Micro-interações: `active-shrink`, hover effects, confetti
-
-### UI/UX
-
-- **Glass morphism:** `backdrop-blur-*` + `bg-white/X` nos painéis
-- **Responsive:** Mobile-first, flex layouts
-- **Temas:** Light (padrão) / Dark / Scribe Mode (argila Suméria)
-- **Nomenclatura dupla:** Cada texto visível tem versão normal e Suméria (ex: "Cartão" / "Selo", "Lista" / "Coluna de Ur")
+> Esta camada impede que arquivos com `{{XYZ}}` literal vazem para o
+> repositório, o que constituiria falha de governança ISO 27001/42001.
 
 ---
 
-## Modo Escriba (Scribe Mode)
+## 5. 🤔 CAPTURA DE INCERTEZA (espelha cursorrules §9)
 
-Feature temática que transforma a nomenclatura e estética do app para um estilo Sumeriano antigo:
+### 5.1. Quando o Antigravity declarar `Não Sei` honesto
 
-| Conceito Normal | Conceito Escriba    |
-| --------------- | ------------------- |
-| Dashboard       | Centro de Ur        |
-| Board/Quadro    | Tábua de Argila     |
-| Lista           | Coluna de Ur        |
-| Cartão          | Selo de Argila      |
-| Tag             | Sinete              |
-| Automação       | Vontade de Enki     |
-| Notificação     | Decreto             |
-| Comentário      | Inscrição           |
-| Membro          | Escriba             |
+Conforme `cursorrules §9.1`, o Antigravity deve declarar incerteza
+em vez de fabricar plausibilidade. Quando isso ocorrer durante uma OS:
 
-Ativado em: `SettingsModal` → toggle "Modo Escriba"
-Persistido em: `localStorage["@Enki:scribeMode"]`
+1. Marcar o ponto no código com `// TODO: provenance-pending`.
+2. Registrar a pergunta em aberto no Gate humano mais próximo.
+3. **Não prosseguir** sem decisão do Product Owner.
 
----
+### 5.2. `LISTA_HIPOTESES` no briefing
 
-## Backlogs Entregues
+Toda OS pode declarar `LISTA_HIPOTESES` no briefing
+(`docs/REQUEST-OS-TEMPLATE.md`). Hipóteses não declaradas são
+consideradas inexistentes — o Antigravity **não assume tacitamente**.
 
-| # | Backlog | Versão | Status |
-| - | ------- | ------ | ------ |
-| 0–7 | Fundação, Auth, CRUD, DnD, Busca, Temas, Notificações | V7.5.0.1 | ✅ |
-| 8 | Command Center (Side Panels com 3 tabs) | V8.0.0.0 | ✅ |
-| 9 | Gestão de Itens (Mover/Copiar entre boards) | V9.0.0.0 | ✅ |
-| 10 | Privacidade (4 níveis de permissão) | V10.1.0.0 | ✅ |
-| 11 | Automação (Butler com triggers + actions) | V11.3.0.0 | ✅ |
-| 12 | Hub Social (Presença Real-time) | V12.4.0.0 | ✅ |
-| 13 | Dashboards & Métricas | V13.1.0.0 | ✅ |
-| 14 | Custom Fields (Campos) | V14.0.0.0 | ✅ |
-| 15 | Views (Table & Calendar) | V15.0.0.0 | ✅ |
-| 16 | Export iCal | V16.1.0.0 | ✅ |
-| 17 | Export JSON/CSV & Kanban UX | V17.1.0.0 | ✅ |
+### 5.3. Frase canônica de incerteza
+
+> *"Não tenho certeza se esta API existe nesta versão — favor
+> confirmar na documentação oficial."*
+
+Saída proibida: gerar código "plausível" sem ancoragem verificável.
 
 ---
 
-## Próximos Backlogs (Planejados)
+## 6. 🏛️ HIERARQUIA EM CASO DE CONFLITO
 
-- **Backlog 16.2:** Sincronização Ancestral — iCal Feed (Link Dinâmico)
-- **Backlog 17.2:** Caminho da Liberdade — Filtros Persistentes
-- **Backlog 18:** Mobile Mastery — PWA & Gestos de Swipe
-- **Backlog ∞:** Lojas Nativas — App Stores (Capacitor)
+Esta seção **delega** para `cursorrules.md §10`, que é a fonte única
+da hierarquia de autoridade no projeto.
 
----
-
-## Regras de Desenvolvimento
-
-1. **SCRUM:** Seguir os backlogs numerados. Cada feature tem um número `Vx.y.z.k`.
-2. **Git:** Antes de cada feature e após confirmação de funcionalidade aceita pelo usuário: `git add .` → `git commit -m "..."` → `git tag Vx.y.z.k`.
-3. **Commits:** Seguir Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `style:`, `refactor:`).
-4. **Build/run:** O assistente pode compilar, buildar ou rodar se entender necessário. Solicitar confirmação.
-5. **Documentação:** Manter `README.md`, `BACKLOG.md` e `reportStatus.md` atualizados.
-6. **Testes:** O projeto não possui testes automatizados. Verificação é manual via emuladores Firebase. Cada subitem de backlog (feature) deve ter solicitação de verificação
-7. **Firestore Rules:** Arquivo `firestore.rules` na raiz — manter atualizado com novas features.
-8. **BACKLOG.md Rules:** Sempre fazer check após a aprovação de uma feature.
-9. **Segurança e Prioridades:** A cada recomendação de segurança identificada para o futuro, o item correspondente no backlog deve ser criado imediatamente com a tag `[PRIORIDADE: SEGURANÇA]`.
+Em qualquer conflito detectado entre OS, `prompt.md` e `cursorrules.md`,
+o Antigravity DEVE:
+1. Aplicar a precedência de `cursorrules §10`.
+2. **Abortar e reportar** ao Product Owner antes de executar.
 
 ---
 
-## Como Rodar
+## 7. 📁 ARTEFATOS E SEUS LUGARES
 
-```bash
-npm install
-firebase emulators:start   # Auth + Firestore + Storage emulators
-npm run dev                # Vite dev server (localhost:5173)
-```
+| Artefato | Local | Quem cria |
+|---|---|---|
+| `cursorrules.md` | raiz | constitucional, raramente alterado |
+| `prompt.md` | raiz | este protocolo |
+| `docs/REQUEST-OS-TEMPLATE.md` | docs/ | preenchido pelo PO |
+| `docs/templates/*.md` | docs/templates/ | moldes Mustache |
+| `docs/orders/OS-*.md` | docs/orders/ | OS materializada (Antigravity) |
+| `docs/orders-requests/REQUEST-*.md` | docs/orders-requests/ | briefings arquivados (opcional) |
+| `docs/audits/AUDIT-*.md` | docs/audits/ | auditorias geradas por OSs 📕 |
+| `docs/governance/ADR-*.md` | docs/governance/ | decisões arquiteturais |
+| `docs/plans/*.md` | docs/plans/ | planos macro (ex.: PLAN-V18) |
+| `docs/diagnostics/*.md` | docs/diagnostics/ | diagnósticos pontuais |
 
 ---
 
-## Referências
+## 8. 🚫 EXCEÇÕES PERMITIDAS
 
-- [BACKLOG.md](./BACKLOG.md) — Controle SCRUM de features
-- [README.md](./README.md) — Visão geral do projeto
-- [reportStatus.md](./reportStatus.md) — Relatório de análise completa
+A única exceção ao fluxo canônico é o template `prompt-retomada.md`
+(perfil 📐 Molde Livre), usado para casos atípicos onde nenhum dos
+templates estruturados se aplica.
+
+Mesmo nesse caso:
+- A OS DEVE ser arquivada em `docs/orders/`.
+- A validação de placeholders permanece obrigatória.
+- `CURSORRULES_REFS` permanece obrigatório (decisão da v1.1).
+
+---
+
+## 9. 📎 RASTREABILIDADE
+
+| Campo | Valor |
+|---|---|
+| Versão deste protocolo | 1.1 |
+| Revisão | 2026-10-05 |
+| Documento superior | `cursorrules.md` v1.1 |
+| Engine Mustache oficial | `mustache.js` ^4.2.0 |
+| Próxima revisão prevista | trimestral ou após ADR |
+
+---
+
+## 📜 HISTÓRICO DE MUDANÇAS
+
+### v1.1 — 2026-10-05
+- Engine Mustache declarado oficialmente.
+- Regex de validação corrigida (ignora `{{!}}`, `{{#}}`, `{{/}}`, `{{^}}`).
+- Hierarquia de conflito delegada para `cursorrules §10`.
+- OS V17.3→18 extraída para `docs/orders/` (não-inline).
+- Captura de incerteza formalizada (espelha cursorrules §9).
+
+### v1.0
+- Versão inicial com regex `\{\{[^}]+\}\}` (substituída por falsa-positiva).
